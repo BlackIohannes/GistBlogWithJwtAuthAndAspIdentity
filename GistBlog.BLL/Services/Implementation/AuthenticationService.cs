@@ -112,13 +112,13 @@ public class AuthenticationService : IAuthenticationService
                 {
                     Username = user.UserName,
                     RefreshToken = refreshToken,
-                    RefreshTokenExpiryDate = DateTime.Now.AddDays(7)
+                    RefreshTokenExpiryDate = DateTime.Now.AddMinutes(10)
                 };
             }
             else
             {
                 tokenInfo.RefreshToken = refreshToken;
-                tokenInfo.RefreshTokenExpiryDate = DateTime.Now.AddDays(7);
+                tokenInfo.RefreshTokenExpiryDate = DateTime.Now.AddMinutes(30);
             }
 
             try
@@ -135,6 +135,7 @@ public class AuthenticationService : IAuthenticationService
                 Name = user.Fullname,
                 Username = user.UserName,
                 Token = token.TokenString,
+                RefreshToken = refreshToken,
                 Expiration = token.ValidTo,
                 StatusCode = 1,
                 Message = "Logged In"

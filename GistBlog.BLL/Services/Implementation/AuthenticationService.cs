@@ -114,6 +114,7 @@ public class AuthenticationService : IAuthenticationService
                     RefreshToken = refreshToken,
                     RefreshTokenExpiryDate = DateTime.Now.AddMinutes(10)
                 };
+                _context.TokenInfos.Add(info);
             }
             else
             {

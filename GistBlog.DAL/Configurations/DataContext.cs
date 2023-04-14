@@ -4,7 +4,7 @@ using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace GistBlog.DAL.DbConfig;
+namespace GistBlog.DAL.Configurations;
 
 public class DataContext : IdentityDbContext<AppUser>
 {

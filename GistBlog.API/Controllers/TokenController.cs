@@ -1,5 +1,5 @@
 using GistBlog.BLL.Services.Contracts;
-using GistBlog.DAL.DbConfig;
+using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

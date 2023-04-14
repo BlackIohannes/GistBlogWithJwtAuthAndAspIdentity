@@ -1,10 +1,7 @@
 using System.Text;
-using GistBlog.BLL.Services.Contracts;
-using GistBlog.BLL.Services.Implementation;
-using GistBlog.DAL.DbConfig;
+using GistBlog.BLL.Extensions;
+using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.Models.Domain;
-using GistBlog.DAL.Repository.Contracts;
-using GistBlog.DAL.Repository.Implementations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -74,12 +71,11 @@ builder.Services.AddAuthentication(options =>
 
 #region Register token service
 
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IBlogService, BlogService>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork<DataContext>>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.UserRegistrationServices();
 
 #endregion
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -109,5 +105,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.AddGlobalErrorHandler();
 
 app.Run();

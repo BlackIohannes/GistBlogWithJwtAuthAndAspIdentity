@@ -1,6 +1,8 @@
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Entities.DTOs;
+using GistBlog.DAL.Entities.Models.Domain;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace GistBlog.API.Controllers;
 
@@ -18,12 +20,15 @@ public class AuthorizationController : ControllerBase
     [HttpPost("UserRegistration")]
     public async Task<IActionResult> Register([FromBody] RegistrationDto model)
     {
-        var newUserRegistration = await _authenticationService.Register(model);
+        var urlScheme = Request.Scheme;
+        var urlHost = Request.Host.Value;
+        var status = await _authenticationService.Register(model, urlScheme, urlHost);
+        // var newUserRegistration = await _authenticationService.Register(model);
 
-        if (newUserRegistration == null)
+        if (status == null)
             return StatusCode(StatusCodes.Status400BadRequest);
 
-        return Ok(newUserRegistration);
+        return Ok(status);
     }
 
     [HttpPost("Login")]

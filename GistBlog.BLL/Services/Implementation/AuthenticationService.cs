@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using GistBlog.BLL.Services.Contracts;
-using GistBlog.DAL.DbConfig;
+using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models.Domain;
 using GistBlog.DAL.Entities.Responses;
@@ -32,7 +32,7 @@ public class AuthenticationService : IAuthenticationService
         _tokenService = tokenService;
     }
 
-    public async Task<Status> Register(RegistrationDto model)
+    public async Task<Status> Register(RegistrationDto model, string urlScheme, string urlHost)
     {
         var status = new Status();
         if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||
@@ -73,6 +73,8 @@ public class AuthenticationService : IAuthenticationService
             return status;
         }
 
+        // verify email
+
         // Add roles
         // For admin registration, make use of UserRole.Admin instead of UserRole.User
         if (!await _roleManager.RoleExistsAsync(UserRole.User))
@@ -82,7 +84,7 @@ public class AuthenticationService : IAuthenticationService
             await _userManager.AddToRoleAsync(user, UserRole.User);
 
         status.StatusCode = 1;
-        status.Message = "Successfully registered";
+        status.Message = "User Successfully registered";
 
         return status;
     }

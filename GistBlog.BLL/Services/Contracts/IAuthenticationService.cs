@@ -1,5 +1,4 @@
 using GistBlog.DAL.Entities.DTOs;
-using GistBlog.DAL.Entities.Models.Domain;
 using GistBlog.DAL.Entities.Responses;
 
 namespace GistBlog.BLL.Services.Contracts;

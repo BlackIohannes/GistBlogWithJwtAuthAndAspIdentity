@@ -17,6 +17,7 @@ public class AuthorizationController : ControllerBase
         _authenticationService = authenticationService;
     }
 
+    [SwaggerOperation(Summary = "Register")]
     [HttpPost("UserRegistration")]
     public async Task<IActionResult> Register([FromBody] RegistrationDto model)
     {
@@ -31,6 +32,7 @@ public class AuthorizationController : ControllerBase
         return Ok(status);
     }
 
+    [SwaggerOperation(Summary = "Login")]
     [HttpPost("Login")]
     public async Task<ActionResult> Login([FromBody] LoginDto model)
     {
@@ -42,6 +44,7 @@ public class AuthorizationController : ControllerBase
         return Ok(userLogin);
     }
 
+    [SwaggerOperation(Summary = "ChangePassword")]
     [HttpPost("ChangePassword")]
     public async Task<IActionResult> ChangePassword(ChangePasswordDto model)
     {
@@ -53,6 +56,7 @@ public class AuthorizationController : ControllerBase
         return Ok(changePassword);
     }
 
+    [SwaggerOperation(Summary = "AdminRegistration")]
     [HttpPost("AdminRegistration")]
     public async Task<IActionResult> AdminRegistration([FromBody] RegistrationDto model)
     {

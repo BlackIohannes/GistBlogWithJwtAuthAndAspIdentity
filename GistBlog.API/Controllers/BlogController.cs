@@ -2,6 +2,7 @@ using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Entities.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace GistBlog.API.Controllers;
 
@@ -16,6 +17,7 @@ public class BlogController : ControllerBase
         _blogService = blogService;
     }
 
+    [SwaggerOperation(Summary = "AddBlog")]
     [HttpPost("CreateNewBlogPost")]
     public async Task<IActionResult> AddBlog([FromBody] BlogDto blogDto)
     {
@@ -27,10 +29,11 @@ public class BlogController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("GetAllUserBlogs")]
-    public async Task<IActionResult> GetBlogs(string id)
+    [SwaggerOperation(Summary = "GetAllBlogsAsync")]
+    [HttpGet("GetAllBlogsAsync")]
+    public async Task<IActionResult> GetAllBlogsAsync()
     {
-        var blogs = await _blogService.GetAllUserBlogs(id);
+        var blogs = await _blogService.GetAllBlogsAsync();
 
         if (blogs == null)
             return StatusCode(StatusCodes.Status400BadRequest);
@@ -38,6 +41,19 @@ public class BlogController : ControllerBase
         return Ok(blogs);
     }
 
+    [SwaggerOperation(Summary = "GetBlogs")]
+    [HttpGet("GetAllUserBlogs")]
+    public async Task<IActionResult> GetBlogs(string id)
+    {
+        var blogs = await _blogService.GetAllUserBlogsAsync(id);
+
+        if (blogs == null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(blogs);
+    }
+
+    [SwaggerOperation(Summary = "GetBlogById")]
     [HttpGet("GetSingleBlogById")]
     public async Task<IActionResult> GetBlogById(Guid id)
     {
@@ -49,6 +65,7 @@ public class BlogController : ControllerBase
         return Ok(blog);
     }
 
+    [SwaggerOperation(Summary = "UpdateBlog")]
     [HttpPost("UpdateUserBlog")]
     public async Task<IActionResult> UpdateBlog([FromBody] UpdateBlogDto blogDto)
     {
@@ -60,11 +77,24 @@ public class BlogController : ControllerBase
         return Ok(blog);
     }
 
+    [SwaggerOperation(Summary = "DeleteBlog")]
     [Authorize(Roles = "Admin")]
     [HttpGet("DeleteBlogById")]
     public async Task<IActionResult> DeleteBlog(Guid id)
     {
         var blog = await _blogService.DeleteBlogAsync(id);
+
+        if (blog == null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(blog);
+    }
+
+    [SwaggerOperation(Summary = "UploadBlogImages")]
+    [HttpPost("UploadBlogImages")]
+    public async Task<IActionResult> UploadBlogImages(string id, IFormFile file)
+    {
+        var blog = await _blogService.UploadBlogImagesAsync(id, file);
 
         if (blog == null)
             return StatusCode(StatusCodes.Status400BadRequest);

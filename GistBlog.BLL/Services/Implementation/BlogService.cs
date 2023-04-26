@@ -92,7 +92,8 @@ public class BlogService : IBlogService
                         Title = createdBlog.Title,
                         Description = createdBlog.Description,
                         Category = createdBlog.Category,
-                        AppUserId = createdBlog.AppUserId
+                        AppUserId = createdBlog.AppUserId,
+                        ImageUrl = createdBlog.ImageUrl
                     }
                 },
                 Result = true,
@@ -135,6 +136,7 @@ public class BlogService : IBlogService
             userBlog.Title = blogDto.Title;
             userBlog.Description = blogDto.Description;
             userBlog.Category = blogDto.Category;
+            userBlog.ImageUrl = blogDto.ImageUrl;
 
             var updatedBlog = await _blogRepository.UpdateAsync(userBlog);
 

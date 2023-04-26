@@ -116,7 +116,8 @@ public class BlogService : IBlogService
             AppUserId = blog.AppUserId,
             Title = blog.Title,
             Description = blog.Description,
-            Category = blog.Category
+            Category = blog.Category,
+            ImageUrl = blog.ImageUrl
         };
     }
 

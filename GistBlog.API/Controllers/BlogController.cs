@@ -26,7 +26,7 @@ public class BlogController : ControllerBase
         if (result == null)
             return StatusCode(StatusCodes.Status400BadRequest);
 
-        return Ok(result);
+        return CreatedAtAction(nameof(AddBlog), result);
     }
 
     [SwaggerOperation(Summary = "GetAllBlogsAsync")]

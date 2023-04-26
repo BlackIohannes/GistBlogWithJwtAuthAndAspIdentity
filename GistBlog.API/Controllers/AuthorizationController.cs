@@ -29,7 +29,7 @@ public class AuthorizationController : ControllerBase
         if (status == null)
             return StatusCode(StatusCodes.Status400BadRequest);
 
-        return Ok(status);
+        return CreatedAtAction(nameof(Register), status);
     }
 
     [SwaggerOperation(Summary = "Login")]

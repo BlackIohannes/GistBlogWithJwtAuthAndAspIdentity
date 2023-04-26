@@ -97,13 +97,10 @@ public class AuthenticationService : IAuthenticationService
             var userRoles = await _userManager.GetRolesAsync(user);
             var authClaims = new List<Claim>()
             {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new(ClaimTypes.Name, user.UserName),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
-            foreach (var userRole in userRoles)
-            {
-                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-            }
+            foreach (var userRole in userRoles) authClaims.Add(new Claim(ClaimTypes.Role, userRole));
 
             var token = _tokenService.GetToken(authClaims);
             var refreshToken = _tokenService.GetRefreshToken();
@@ -197,7 +194,6 @@ public class AuthenticationService : IAuthenticationService
 
         return status;
     }
-
 
     public async Task<Status> AdminRegistration([FromBody] RegistrationDto model)
     {

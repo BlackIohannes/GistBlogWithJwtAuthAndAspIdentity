@@ -5,6 +5,7 @@ using GistBlog.DAL.Entities.Models.Domain;
 using GistBlog.DAL.Entities.Responses;
 using GistBlog.DAL.Exceptions;
 using GistBlog.DAL.Repository.Contracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace GistBlog.BLL.Services.Implementation;
@@ -22,7 +23,24 @@ public class BlogService : IBlogService
         _userManager = userManager;
     }
 
-    public async Task<IQueryable<BlogDto>> GetAllUserBlogs(string id)
+    public async Task<IEnumerable<BlogDto>> GetAllBlogsAsync()
+    {
+        var blogs = await _blogRepository.GetAllAsync();
+
+        if (blogs is null)
+            throw new NotFoundException("Blogs not found.");
+
+        return blogs.Select(x => new BlogDto()
+        {
+            AppUserId = x.AppUserId,
+            Title = x.Title,
+            Description = x.Description,
+            Category = x.Category,
+            ImageUrl = x.ImageUrl
+        });
+    }
+
+    public async Task<IEnumerable<BlogDto>> GetAllUserBlogsAsync(string id)
     {
         var user = await _userManager.FindByIdAsync(id);
 
@@ -39,7 +57,8 @@ public class BlogService : IBlogService
             AppUserId = x.AppUserId,
             Title = x.Title,
             Description = x.Description,
-            Category = x.Category
+            Category = x.Category,
+            ImageUrl = x.ImageUrl
         });
     }
 
@@ -56,7 +75,8 @@ public class BlogService : IBlogService
             AppUserId = blogDto.AppUserId,
             Title = blogDto.Title,
             Description = blogDto.Description,
-            Category = blogDto.Category
+            Category = blogDto.Category,
+            ImageUrl = blogDto.ImageUrl
         };
 
         var createdBlog = await _blogRepository.AddAsync(newBlog);
@@ -67,7 +87,7 @@ public class BlogService : IBlogService
             {
                 Blogs = new List<BlogDto>()
                 {
-                    new BlogDto()
+                    new()
                     {
                         Title = createdBlog.Title,
                         Description = createdBlog.Description,
@@ -117,10 +137,7 @@ public class BlogService : IBlogService
 
             var updatedBlog = await _blogRepository.UpdateAsync(userBlog);
 
-            if (updatedBlog != null)
-            {
-                return true;
-            }
+            if (updatedBlog != null) return true;
 
             throw new DAL.Exceptions.NotImplementedException("Was unable to update your blog");
         }
@@ -145,5 +162,51 @@ public class BlogService : IBlogService
                 "Blog was deleted successfully"
             }
         };
+    }
+
+    public async Task<Status> UploadBlogImagesAsync(string id, IFormFile file)
+    {
+        var status = new Status();
+        var blog = await _blogRepository.GetSingleByAsync(x => x.Id.ToString() == id);
+
+        if (blog is null)
+        {
+            status.StatusCode = 0;
+            status.Message = $"Invalid blog id: {id}";
+
+            return status;
+        }
+
+        string path;
+        if (file.Length > 0)
+        {
+            path = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "Uploaded files"));
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+            await using var fileStream = new FileStream(Path.Combine(path, file.FileName), FileMode.Create);
+            await file.CopyToAsync(fileStream);
+
+            blog.ImageUrl = path + $"/{file.FileName}";
+
+            var updatedBlog = await _blogRepository.UpdateAsync(blog);
+
+            if (updatedBlog is null)
+            {
+                status.StatusCode = 0;
+                status.Message = "Unable to upload image";
+
+                return status;
+            }
+
+            status.StatusCode = 1;
+            status.Message = $"Image uploaded successfully. Path: {path}";
+
+            return status;
+        }
+
+        status.StatusCode = 0;
+        status.Message = "No file found";
+
+        return status;
     }
 }

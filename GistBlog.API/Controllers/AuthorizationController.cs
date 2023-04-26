@@ -65,6 +65,6 @@ public class AuthorizationController : ControllerBase
         if (newAdminRegistration == null)
             return StatusCode(StatusCodes.Status400BadRequest);
 
-        return Ok(newAdminRegistration);
+        return CreatedAtAction(nameof(AdminRegistration), newAdminRegistration);
     }
 }

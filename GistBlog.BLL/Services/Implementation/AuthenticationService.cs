@@ -32,7 +32,7 @@ public class AuthenticationService : IAuthenticationService
         _tokenService = tokenService;
     }
 
-    public async Task<Status> Register(RegistrationDto model, string urlScheme, string urlHost)
+    public async Task<Status> Register(RegistrationDto model)
     {
         var status = new Status();
         if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||

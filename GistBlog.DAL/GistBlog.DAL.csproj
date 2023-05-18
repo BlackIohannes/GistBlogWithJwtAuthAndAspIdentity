@@ -22,6 +22,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="6.0.0" />
+        <PackageReference Include="WatchDog.NET" Version="1.4.7" />
     </ItemGroup>
 
 

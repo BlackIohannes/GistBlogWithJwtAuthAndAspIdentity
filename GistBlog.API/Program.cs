@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using WatchDog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,8 +77,21 @@ builder.Services.UserRegistrationServices();
 #endregion
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddWatchDogServices();
 
 var app = builder.Build();
+
+#region watchDog configuration
+
+app.UseWatchDogExceptionLogger();
+
+app.UseWatchDog(options =>
+{
+    options.WatchPageUsername = "admin";
+    options.WatchPagePassword = "admin";
+});
+
+#endregion
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

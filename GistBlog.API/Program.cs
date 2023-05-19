@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using WatchDog;
+using WatchDog.src.Enums;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,7 +78,11 @@ builder.Services.UserRegistrationServices();
 #endregion
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddWatchDogServices();
+builder.Services.AddWatchDogServices(option =>
+{
+    option.IsAutoClear = true;
+    option.ClearTimeSchedule = WatchDogAutoClearScheduleEnum.Weekly;
+});
 
 var app = builder.Build();
 

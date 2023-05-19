@@ -12,6 +12,10 @@ appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 
+# Watch logs
+watchlogs.db
+watchlogs-log.db
+
 # User-specific files
 *.resharper
 *.rsuser

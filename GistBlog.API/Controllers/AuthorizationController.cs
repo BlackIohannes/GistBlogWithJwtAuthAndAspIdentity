@@ -64,4 +64,16 @@ public class AuthorizationController : ControllerBase
 
         return CreatedAtAction(nameof(AdminRegistration), newAdminRegistration);
     }
+
+    // public async Task<IActionResult> SendVerificationEmail(string email, string verificationToken)
+    // {
+    // }
+    [SwaggerOperation(Summary = "VerifyUser")]
+    [HttpGet("VerifyUser")]
+    public async Task<IActionResult> VerifyUser([FromQuery] string email, [FromQuery] string verificationToken)
+    {
+        var isVerified = await _authenticationService.VerifyUser(email, verificationToken);
+
+        return Ok(isVerified);
+    }
 }

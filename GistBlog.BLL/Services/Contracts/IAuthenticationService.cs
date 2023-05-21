@@ -9,4 +9,6 @@ public interface IAuthenticationService
     Task<LoginResponse> Login(LoginDto model);
     Task<Status> ChangePassword(ChangePasswordDto model);
     Task<Status> AdminRegistration(RegistrationDto model);
+    Task<bool> SendVerificationEmail(string email, string verificationToken);
+    Task<Status> VerifyUser(string email, string verificationToken);
 }

@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Web;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
@@ -9,6 +10,10 @@ using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace GistBlog.BLL.Services.Implementation;
 
@@ -18,18 +23,24 @@ public class AuthenticationService : IAuthenticationService
     private readonly UserManager<AppUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ITokenService _tokenService;
+    private readonly EmailSettings _emailConfig;
+    private readonly IConfiguration _configuration;
 
     public AuthenticationService(
         DataContext context,
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        ITokenService tokenService
+        ITokenService tokenService,
+        EmailSettings emailConfig,
+        IConfiguration configuration
     )
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
+        _emailConfig = emailConfig;
+        _configuration = configuration;
     }
 
     public async Task<Status> Register(RegistrationDto model)
@@ -64,6 +75,24 @@ public class AuthenticationService : IAuthenticationService
             PhoneNumber = model.PhoneNumber
         };
 
+        // verify email
+        var verification = Guid.NewGuid().ToString().Replace("-", "");
+        var emailSent = await SendVerificationEmail(user.Email, verification);
+        if (emailSent)
+        {
+            user.VerificationToken = verification;
+            await _userManager.UpdateAsync(user);
+
+            status.StatusCode = 1;
+            status.Message = "Verification email sent successfully.";
+            return status;
+        }
+
+        // status.StatusCode = 0;
+        // status.Message = "Email sending failed.";
+        // return status;
+
+
         // Create user here
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
@@ -72,8 +101,6 @@ public class AuthenticationService : IAuthenticationService
             status.Message = "User creation failed";
             return status;
         }
-
-        // verify email
 
         // Add roles
         // For admin registration, make use of UserRole.Admin instead of UserRole.User
@@ -244,5 +271,44 @@ public class AuthenticationService : IAuthenticationService
         status.StatusCode = 1;
         status.Message = "Sucessfully registered";
         return status;
+    }
+
+    // email verification
+    public async Task<bool> SendVerificationEmail(string email, string verificationToken)
+    {
+        var client = new SendGridClient(_emailConfig.ApiKey);
+        var from = new EmailAddress(_emailConfig.SenderEmail);
+        var to = new EmailAddress(email);
+        const string subject = "Account Verification";
+
+        var verificationUrl =
+            $"{_configuration["AppBaseUrl"]}/marketplace/authentication/verify?email={HttpUtility.UrlEncode(email)}";
+        var plainTextContent = $"Please click the following link to verify your account: {verificationUrl}";
+        var htmlContent = $"<strong>Please click the following link to verify your account: {verificationUrl}</strong>";
+        var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+        var response = await client.SendEmailAsync(msg);
+
+        return response.StatusCode == System.Net.HttpStatusCode.Accepted;
+    }
+
+    public async Task<Status> VerifyUser(string email, string verificationToken)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user != null && !user.EmailConfirmed && user.VerificationToken == verificationToken)
+        {
+            user.EmailConfirmed = true;
+            user.VerificationToken = null;
+            await _userManager.UpdateAsync(user);
+
+            return new Status() { StatusCode = 1, Message = "User verified successfully" };
+        }
+
+        return new Status() { StatusCode = 0, Message = "User verification failed" };
+    }
+
+    public static void ConfigureEmail(IServiceCollection service, IConfiguration configuration)
+    {
+        service.Configure<EmailSettings>(options => configuration.GetSection("EmailSettings").Bind(options));
     }
 }

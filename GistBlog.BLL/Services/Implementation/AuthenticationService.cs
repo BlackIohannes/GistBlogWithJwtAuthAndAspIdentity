@@ -18,21 +18,27 @@ public class AuthenticationService : IAuthenticationService
     private readonly UserManager<AppUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ITokenService _tokenService;
+    private readonly EmailSettings _emailConfig;
+    private readonly IMailjetService _mailjetService;
 
     public AuthenticationService(
         DataContext context,
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        ITokenService tokenService
+        ITokenService tokenService,
+        EmailSettings emailConfig,
+        IMailjetService mailjetService
     )
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
+        _emailConfig = emailConfig;
+        _mailjetService = mailjetService;
     }
 
-    public async Task<Status> Register(RegistrationDto model)
+    public async Task<Status> SignupAsync(RegistrationDto model)
     {
         var status = new Status();
         if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||
@@ -40,8 +46,7 @@ public class AuthenticationService : IAuthenticationService
             string.IsNullOrEmpty(model.Password))
         {
             status.StatusCode = 0;
-            status.Message = "Please pass all the required fields.";
-
+            status.Message = "Please fill in all the required fields.";
             return status;
         }
 
@@ -51,7 +56,6 @@ public class AuthenticationService : IAuthenticationService
         {
             status.StatusCode = 0;
             status.Message = "Username already exists.";
-
             return status;
         }
 
@@ -61,35 +65,38 @@ public class AuthenticationService : IAuthenticationService
             SecurityStamp = Guid.NewGuid().ToString(),
             Email = model.Email,
             Fullname = model.Fullname,
-            PhoneNumber = model.PhoneNumber
+            PhoneNumber = model.PhoneNumber,
+            EmailConfirmed = false
         };
 
-        // Create user here
+        // Create user
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
         {
             status.StatusCode = 0;
-            status.Message = "User creation failed";
+            status.Message = "User creation failed.";
             return status;
         }
 
-        // verify email
-
         // Add roles
-        // For admin registration, make use of UserRole.Admin instead of UserRole.User
+        // For admin registration, use UserRole.Admin instead of UserRole.User
         if (!await _roleManager.RoleExistsAsync(UserRole.User))
             await _roleManager.CreateAsync(new IdentityRole(UserRole.User));
 
         if (await _roleManager.RoleExistsAsync(UserRole.User))
             await _userManager.AddToRoleAsync(user, UserRole.User);
 
-        status.StatusCode = 1;
-        status.Message = "User Successfully registered";
+        // Send registration email
+        const string emailSubject = "Registration Confirmation";
+        const string emailContent = "Thank you for registering. Please confirm your email address.";
+        await _mailjetService.SendEmailAsync(user.Email, user.Fullname, emailSubject, emailContent);
 
+        status.StatusCode = 1;
+        status.Message = "User successfully registered.";
         return status;
     }
 
-    public async Task<LoginResponse> Login(LoginDto model)
+    public async Task<LoginResponse> LoginAsync(LoginDto model)
     {
         var user = await _userManager.FindByNameAsync(model.Username);
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
@@ -152,7 +159,28 @@ public class AuthenticationService : IAuthenticationService
         };
     }
 
-    public async Task<Status> ChangePassword(ChangePasswordDto model)
+    // logout
+    public async Task<Status> LogoutAsync(string username)
+    {
+        var status = new Status();
+        var tokenInfo = await _context.TokenInfos.FirstOrDefaultAsync(x => x.Username == username);
+        if (tokenInfo != null)
+        {
+            _context.TokenInfos.Remove(tokenInfo);
+            await _context.SaveChangesAsync();
+            status.StatusCode = 1;
+            status.Message = "Logged out successfully";
+        }
+        else
+        {
+            status.StatusCode = 0;
+            status.Message = "No user found";
+        }
+
+        return status;
+    }
+
+    public async Task<Status> ChangePasswordAsync(ChangePasswordDto model)
     {
         var status = new Status();
         // check validations
@@ -195,7 +223,7 @@ public class AuthenticationService : IAuthenticationService
         return status;
     }
 
-    public async Task<Status> AdminRegistration([FromBody] RegistrationDto model)
+    public async Task<Status> AdminRegistrationAsync([FromBody] RegistrationDto model)
     {
         var status = new Status();
         if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||
@@ -244,5 +272,252 @@ public class AuthenticationService : IAuthenticationService
         status.StatusCode = 1;
         status.Message = "Sucessfully registered";
         return status;
+    }
+
+    // create roles
+    public async Task<Status> CreateRolesAsync([FromBody] List<string> roles)
+    {
+        var status = new Status();
+        if (roles == null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        foreach (var role in roles)
+            if (!await _roleManager.RoleExistsAsync(role))
+                await _roleManager.CreateAsync(new IdentityRole(role));
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully created roles";
+        return status;
+    }
+
+    // assign roles
+    public async Task<Status> AssignRolesAsync([FromBody] List<string> roles, string username)
+    {
+        var status = new Status();
+        if (roles == null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        var user = await _userManager.FindByNameAsync(username);
+        if (user is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid username";
+            return status;
+        }
+
+        foreach (var role in roles)
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                status.StatusCode = 0;
+                status.Message = "Invalid role";
+                return status;
+            }
+
+        foreach (var role in roles) await _userManager.AddToRoleAsync(user, role);
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully assigned roles";
+        return status;
+    }
+
+    // edit role
+    public async Task<Status> EditRoleAsync([FromBody] EditRoleDto model)
+    {
+        var status = new Status();
+        if (string.IsNullOrEmpty(model.RoleName) || string.IsNullOrEmpty(model.NewRoleName))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        var role = await _roleManager.FindByNameAsync(model.RoleName);
+        if (role is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid role";
+            return status;
+        }
+
+        role.Name = model.NewRoleName;
+        await _roleManager.UpdateAsync(role);
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully edited role";
+        return status;
+    }
+
+    // delete role
+    public async Task<Status> DeleteRoleAsync(string roleName)
+    {
+        var status = new Status();
+        if (string.IsNullOrEmpty(roleName))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        var role = await _roleManager.FindByNameAsync(roleName);
+        if (role is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid role";
+            return status;
+        }
+
+        await _roleManager.DeleteAsync(role);
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully deleted role";
+        return status;
+    }
+
+    // edit user role
+    public async Task<Status> EditUserRoleAsync([FromBody] EditUserRoleDto model)
+    {
+        var status = new Status();
+        if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.RoleName))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        var user = await _userManager.FindByNameAsync(model.Username);
+        if (user is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid username";
+            return status;
+        }
+
+        var role = await _roleManager.FindByNameAsync(model.RoleName);
+        if (role is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid role";
+            return status;
+        }
+
+        await _userManager.RemoveFromRoleAsync(user, role.Name);
+        await _userManager.AddToRoleAsync(user, role.Name);
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully edited user role";
+        return status;
+    }
+
+    // delete user role
+    public async Task<Status> DeleteUserRoleAsync([FromBody] DeleteUserRoleDto model)
+    {
+        var status = new Status();
+        if (string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.RoleName))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        var user = await _userManager.FindByNameAsync(model.Username);
+        if (user is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid username";
+            return status;
+        }
+
+        var role = await _roleManager.FindByNameAsync(model.RoleName);
+        if (role is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid role";
+            return status;
+        }
+
+        await _userManager.RemoveFromRoleAsync(user, role.Name);
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully deleted user role";
+        return status;
+    }
+
+    // get all roles and permissions
+    public async Task<List<string>> GetAllRolesAsync()
+    {
+        var status = new Status();
+        var roles = await _roleManager.Roles.ToListAsync();
+
+        if (roles is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Not found!";
+            return null;
+        }
+
+        return roles.Select(x => x.Name).ToList();
+    }
+
+    // get all users and roles
+    public async Task<List<string>> GetAllUsersAsync()
+    {
+        var status = new Status();
+        var users = await _userManager.Users.ToListAsync();
+
+        if (users is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Not found!";
+            return null;
+        }
+
+        return users.Select(x => x.UserName).ToList();
+    }
+
+    // get user and specific role
+    public async Task<List<string>> GetUserRolesAsync(string username)
+    {
+        var status = new Status();
+        var user = await _userManager.FindByNameAsync(username);
+
+        if (user is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Not found!";
+            return null;
+        }
+
+        return (List<string>)await _userManager.GetRolesAsync(user);
+    }
+
+    // get all users and specific roles
+    public async Task<List<string>> GetAllUsersAndRolesAsync()
+    {
+        var status = new Status();
+        var users = await _userManager.Users.ToListAsync();
+
+        if (users is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Not found!";
+            return null;
+        }
+
+        var result = new List<string>();
+        foreach (var user in users)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            result.Add($"{user.UserName} - {string.Join(", ", roles)}");
+        }
+
+        return result;
     }
 }

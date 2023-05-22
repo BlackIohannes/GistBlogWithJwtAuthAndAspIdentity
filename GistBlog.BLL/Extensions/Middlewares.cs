@@ -1,4 +1,3 @@
-using System.Configuration;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.BLL.Services.Implementation;
 using GistBlog.DAL.Configurations;
@@ -18,7 +17,8 @@ public static class Middlewares
         services.AddScoped<IBlogService, BlogService>();
         services.AddScoped<IUnitOfWork, UnitOfWork<DataContext>>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
-        services.AddSingleton<IConfiguration>(configuration);
         services.AddScoped<EmailSettings>();
+        services.Configure<MailjetSettings>(configuration.GetSection("MailjetSettings"));
+        services.AddScoped<IMailjetService, MailjetService>();
     }
 }

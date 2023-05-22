@@ -73,7 +73,7 @@ builder.Services.AddAuthentication(options =>
 
 #region Register token service
 
-builder.Services.UserRegistrationServices();
+builder.Services.UserRegistrationServices(builder.Configuration);
 
 #endregion
 

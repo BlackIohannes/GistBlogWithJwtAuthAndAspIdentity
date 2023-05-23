@@ -9,6 +9,7 @@ using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace GistBlog.BLL.Services.Implementation;
 
@@ -20,6 +21,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly ITokenService _tokenService;
     private readonly EmailSettings _emailConfig;
     private readonly IMailjetService _mailjetService;
+    private readonly IConfiguration _configuration;
 
     public AuthenticationService(
         DataContext context,
@@ -27,7 +29,8 @@ public class AuthenticationService : IAuthenticationService
         RoleManager<IdentityRole> roleManager,
         ITokenService tokenService,
         EmailSettings emailConfig,
-        IMailjetService mailjetService
+        IMailjetService mailjetService,
+        IConfiguration configuration
     )
     {
         _context = context;
@@ -36,6 +39,7 @@ public class AuthenticationService : IAuthenticationService
         _tokenService = tokenService;
         _emailConfig = emailConfig;
         _mailjetService = mailjetService;
+        _configuration = configuration;
     }
 
     public async Task<Status> SignupAsync(RegistrationDto model)
@@ -85,11 +89,6 @@ public class AuthenticationService : IAuthenticationService
 
         if (await _roleManager.RoleExistsAsync(UserRole.User))
             await _userManager.AddToRoleAsync(user, UserRole.User);
-
-        // Send registration email
-        const string emailSubject = "Registration Confirmation";
-        const string emailContent = "Thank you for registering. Please confirm your email address.";
-        await _mailjetService.SendEmailAsync(user.Email, user.Fullname, emailSubject, emailContent);
 
         status.StatusCode = 1;
         status.Message = "User successfully registered.";
@@ -176,6 +175,71 @@ public class AuthenticationService : IAuthenticationService
             status.StatusCode = 0;
             status.Message = "No user found";
         }
+
+        return status;
+    }
+
+    // login status
+    public async Task<Status> LoginStatusAsync(string username)
+    {
+        var status = new Status();
+        var tokenInfo = await _context.TokenInfos.FirstOrDefaultAsync(x => x.Username == username);
+        if (tokenInfo != null)
+        {
+            status.StatusCode = 1;
+            status.Message = "Logged in";
+        }
+        else
+        {
+            status.StatusCode = 0;
+            status.Message = "Not logged in";
+        }
+
+        return status;
+    }
+
+    // forgot password
+    public async Task<Status> ForgotPasswordAsync([FromBody] ForgotPasswordDto model)
+    {
+        var status = new Status();
+
+        // Check validations
+        if (string.IsNullOrEmpty(model.Email))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please provide a valid email";
+            return status;
+        }
+
+        // Find the user by email
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid email";
+            return status;
+        }
+
+        // Ensure there is only one user found with the email
+        var usersCount = await _userManager.Users.CountAsync(u => u.Email == model.Email);
+        if (usersCount > 1) throw new InvalidOperationException("Sequence contains more than one element");
+
+        // Generate password reset token
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var link = $"{_configuration["AppSettings:BaseUrl"]}/reset-password?token={token}&email={model.Email}";
+
+        // Send email
+        var headers = new Dictionary<string, string>
+        {
+            { "Reply-To", "noreply@example.com" }
+        };
+        var headersString = string.Join("; ", headers.Select(kv => $"{kv.Key}={kv.Value}"));
+
+        await _mailjetService.SendEmailAsync(user.Email, "Reset Password",
+            $"Please click on the link below to reset your password: {link}", headersString);
+
+        status.StatusCode = 1;
+        status.Message = "Password reset link has been sent to your email";
 
         return status;
     }

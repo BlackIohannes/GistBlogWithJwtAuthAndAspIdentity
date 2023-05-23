@@ -1,6 +1,7 @@
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Responses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace GistBlog.BLL.Services.Contracts;
 
@@ -9,6 +10,8 @@ public interface IAuthenticationService
     Task<Status> SignupAsync(RegistrationDto model);
     Task<LoginResponse> LoginAsync(LoginDto model);
     Task<Status> LogoutAsync(string username);
+    Task<Status> LoginStatusAsync(string username);
+    Task<Status> ForgotPasswordAsync([FromBody] ForgotPasswordDto model);
     Task<Status> ChangePasswordAsync(ChangePasswordDto model);
     Task<Status> AdminRegistrationAsync(RegistrationDto model);
     Task<Status> CreateRolesAsync([FromBody] List<string> roles);

@@ -52,6 +52,28 @@ public class AuthorizationController : ControllerBase
         return Ok(loggedOutUser);
     }
 
+    [HttpPost("LoginStatusAsync")]
+    public async Task<IActionResult> LoginStatusAsync(string username)
+    {
+        var loginStatus = await _authenticationService.LoginStatusAsync(username);
+
+        if (loginStatus == null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(loginStatus);
+    }
+
+    [HttpPost("ForgotPasswordAsync")]
+    public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordDto model)
+    {
+        var forgotPassword = await _authenticationService.ForgotPasswordAsync(model);
+
+        if (forgotPassword == null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(forgotPassword);
+    }
+
     [SwaggerOperation(Summary = "ChangePassword")]
     [HttpPost("ChangePassword")]
     public async Task<IActionResult> ChangePassword(ChangePasswordDto model)

@@ -1,57 +1,53 @@
 ### Postman API Doc - https://documenter.getpostman.com/view/18462993/2s93eR4vmq
 ## Folder Structure
 
-### GistBlog.API
-#### Is the root directory and it contains the following directories
-1. Controllers
-2. Uploaded files
-3. Program.cs file
-4. watchdog.db dump
+## The GistBlog API is a three-layer architecture, with the following folders:
 
-### GistBlog.BLL
-This layer contains the application business logic. The following folder are embedded inside it:
-#### Extensions
-1. ApplicationBuilderExtention.cs (Contains configuration for global error handling)
-2. Middlewares.cs (Here is where the registration for the app interface and services is done)
-#### Services
-This directory contains two directories:
-1. Contracts: This directory contains our application interfaces
-2. Implementation: The implementations for our interfaces
+>### GistBlog.API - The root directory, which contains the following subdirectories:
+> 
+>  - Controllers - The controllers for the API endpoints
+>  - Uploaded files - The directory for uploaded files
+>  - Program.cs - The main application file
+>  - watchdog.db dump - A dump of the database
 
-### GistBlog.DAL
-This layer contains our:
-1. Models directory, 
-2. Migrations directory, 
-3. Database configuration.
-4. Exceptions for global error handler
-5. Repository directory
-6. Enums
+>### GistBlog.BLL - The business logic layer, which contains the following subdirectories:
+>
+>  - Extensions - Contains extensions for the application
+>  - Services - Contains the application services
 
-## The is a an blogging API with very advanced features such as:
-### Authentication Features:
-1. Normal user registration
-2. Login
-3. Logout
-4. Check user login status
-5. Forgot password recovery
-6. Change password
-7. Admin registration
-8. Create roles
-9. Assign roles
-10. Edit role
-11. Delete role
-12. Edit a user's role
-13. Delete a user's role
-14. Get all roles
-15. Get a user role(s)
-16. Get all users and roles
-17. Refresh token
+>### GistBlog.DAL - The data access layer, which contains the following subdirectories:
+> 
+> - Models - The data models
+> - Migrations - The database migrations
+> - Exceptions - The exceptions for the global error handler
+> - Repository - The repository for the data access layer
+> - Enums - The enumerations for the data access layer
 
-### Blog Features:
-1. Create new blog post
-2. Get all blogs posts
-3. Get all users blog post
-4. Get single blog post by id
-5. Update a user blog post
-6. Delete a blog post
-7. Blog image upload
+## Authentication Features:
+> - Normal user registration - Allows users to create a new account
+> - Login - Allows users to log in to their account
+> - Logout - Allows users to log out of their account
+> - Check user login status - Checks whether a user is logged in
+> - Forgot password recovery - Allows users to reset their password
+> - Change password - Allows users to change their password
+> - Admin registration - Allows administrators to create an account
+> - Create roles - Allows administrators to create new roles
+> - Assign roles - Allows administrators to assign roles to users
+> - Edit role - Allows administrators to edit roles
+> - Delete role - Allows administrators to delete roles
+> - Edit a user's role - Allows administrators to edit a user's role
+> - Delete a user's role - Allows administrators to delete a user's role
+> - Get all roles - Allows administrators to get a list of all roles
+> - Get a user role(s) - Allows administrators to get a user's role(s)
+> - Get all users and roles - Allows administrators to get a list of all users and their roles
+> - Refresh token - Allows users to refresh their access token
+
+## Blog Features:
+#### The GistBlog API has the following blog features:
+> - Create new blog post - Allows users to create a new blog post
+> - Get all blogs posts - Allows users to get a list of all blog posts
+> - Get all users blog post - Allows users to get a list of all their blog posts
+> - Get single blog post by id - Allows users to get a single blog post by its ID
+> - Update a user blog post - Allows users to update their blog posts
+> - Delete a blog post - Allows users to delete their blog posts
+> - Blog image upload - Allows users to upload images to their blog posts

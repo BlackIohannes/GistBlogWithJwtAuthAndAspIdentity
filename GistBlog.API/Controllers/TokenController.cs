@@ -50,21 +50,25 @@ public class TokenController : ControllerBase
     [HttpPost("RevokeToken")]
     public async Task<ActionResult> Revoke()
     {
-        try
-        {
-            var username = User.Identity.Name;
-            var user = await _context.TokenInfos.SingleOrDefaultAsync(x => x.Username == username);
-            if (user is null)
-                return BadRequest();
+        // Check if the "Authorization" header is present and not empty
+        if (!HttpContext.Request.Headers.TryGetValue("Authorization", out var authorizationHeader) ||
+            string.IsNullOrEmpty(authorizationHeader))
+            return BadRequest("Authorization header is missing or empty");
 
-            user.RefreshToken = null;
-            await _context.SaveChangesAsync();
+        var principal = _tokenService.GetPrincipalFromExpiredToken(authorizationHeader);
 
-            return Ok(true);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        // Extract the username from the principal
+        var username = principal.Identity.Name;
+
+        // Find the user in the database
+        var user = await _context.TokenInfos.SingleOrDefaultAsync(x => x.Username == username);
+        if (user == null) return BadRequest("Invalid client request");
+
+        // Revoke the refresh token
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryDate = DateTime.Now;
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
 }

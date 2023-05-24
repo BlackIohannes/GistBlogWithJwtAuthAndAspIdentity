@@ -22,6 +22,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly EmailSettings _emailConfig;
     private readonly IMailjetService _mailjetService;
     private readonly IConfiguration _configuration;
+    private readonly SignInManager<AppUser> _signInManager;
 
     public AuthenticationService(
         DataContext context,
@@ -30,7 +31,8 @@ public class AuthenticationService : IAuthenticationService
         ITokenService tokenService,
         EmailSettings emailConfig,
         IMailjetService mailjetService,
-        IConfiguration configuration
+        IConfiguration configuration,
+        SignInManager<AppUser> signInManager
     )
     {
         _context = context;
@@ -40,6 +42,7 @@ public class AuthenticationService : IAuthenticationService
         _emailConfig = emailConfig;
         _mailjetService = mailjetService;
         _configuration = configuration;
+        _signInManager = signInManager;
     }
 
     public async Task<Status> SignupAsync(RegistrationDto model)
@@ -60,6 +63,14 @@ public class AuthenticationService : IAuthenticationService
         {
             status.StatusCode = 0;
             status.Message = "Username already exists.";
+            return status;
+        }
+
+        var emailExist = await _userManager.FindByNameAsync(model.Email);
+        if (emailExist != null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Email already exists.";
             return status;
         }
 
@@ -583,5 +594,124 @@ public class AuthenticationService : IAuthenticationService
         }
 
         return result;
+    }
+
+    // delete user
+    public async Task<Status> DeleteUserAsync(string username)
+    {
+        var status = new Status();
+        if (string.IsNullOrEmpty(username))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        var user = await _userManager.FindByNameAsync(username);
+        if (user is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid username";
+            return status;
+        }
+
+        await _userManager.DeleteAsync(user);
+
+        status.StatusCode = 1;
+        status.Message = "Sucessfully deleted user";
+        return status;
+    }
+
+    // register using google oauth2
+    public async Task<Status> RegisterWithGoogleAsync(RegisterWithGoogleDto model)
+    {
+        var status = new Status();
+        // Check validations
+        if (string.IsNullOrEmpty(model.Email))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please provide a valid email";
+            return status;
+        }
+
+        // Check if the user already exists
+        var existingUser = await _userManager.FindByEmailAsync(model.Email);
+        if (existingUser != null)
+        {
+            status.StatusCode = 0;
+            status.Message = "User already exists";
+            return status;
+        }
+
+        // Create a new user using Google information
+        var user = new AppUser()
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            Fullname = model.Fullname
+            // Set additional user properties as needed
+        };
+
+        // Attempt to register the user
+        var result = await _userManager.CreateAsync(user);
+        if (!result.Succeeded)
+        {
+            status.StatusCode = 0;
+            status.Message = "User registration failed";
+            return status;
+        }
+
+        // Add Google authentication to the user
+        var googleLoginInfo = new UserLoginInfo("Google", model.GoogleId, "Google");
+        result = await _userManager.AddLoginAsync(user, googleLoginInfo);
+        if (!result.Succeeded)
+        {
+            status.StatusCode = 0;
+            status.Message = "Failed to add Google authentication";
+            return status;
+        }
+
+        // Registration and Google authentication succeeded
+        status.StatusCode = 1;
+        status.Message = "User registered successfully with Google authentication";
+        return status;
+    }
+
+    // login using google oauth2
+    public async Task<Status> LoginWithGoogleAsync(LoginWithGoogleDto model)
+    {
+        var status = new Status();
+        // Check validations
+        if (string.IsNullOrEmpty(model.Email))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please provide a valid email";
+            return status;
+        }
+
+        // Check if the user already exists
+        var existingUser = await _userManager.FindByEmailAsync(model.Email);
+        if (existingUser == null)
+        {
+            status.StatusCode = 0;
+            status.Message = "User does not exist";
+            return status;
+        }
+
+        // Attempt to login the user with Google OAuth2
+        var googleLoginInfo = new UserLoginInfo("Google", model.GoogleId, "Google");
+        var result = await _signInManager.ExternalLoginSignInAsync(googleLoginInfo.LoginProvider,
+            googleLoginInfo.ProviderKey, false, true);
+        if (!result.Succeeded)
+        {
+            status.StatusCode = 0;
+            status.Message = "Invalid login credentials";
+            return status;
+        }
+
+        // Login succeeded
+        status.StatusCode = 1;
+        status.Message = "User logged in successfully with Google authentication";
+        return status;
     }
 }

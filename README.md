@@ -40,6 +40,9 @@
 > - Get all roles - Allows administrators to get a list of all roles
 > - Get a user role(s) - Allows administrators to get a user's role(s)
 > - Get all users and roles - Allows administrators to get a list of all users and their roles
+> - Delete a user - Allows administrators to delete a user
+> - Register with Google authentication - Allows users the choice to register with their google account
+> - Login with Google authentication - Allows users the choice to login with the google account they registered with
 > - Refresh token - Allows users to refresh their access token
 
 ## Blog Features:

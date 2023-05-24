@@ -23,4 +23,7 @@ public interface IAuthenticationService
     Task<List<string>> GetAllRolesAsync();
     Task<List<string>> GetUserRolesAsync(string username);
     Task<List<string>> GetAllUsersAndRolesAsync();
+    Task<Status> DeleteUserAsync(string username);
+    Task<Status> RegisterWithGoogleAsync(RegisterWithGoogleDto model);
+    Task<Status> LoginWithGoogleAsync(LoginWithGoogleDto model);
 }

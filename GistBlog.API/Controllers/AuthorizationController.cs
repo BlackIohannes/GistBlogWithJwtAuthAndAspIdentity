@@ -196,4 +196,37 @@ public class AuthorizationController : ControllerBase
 
         return Ok(getAllUsersRoles);
     }
+
+    [HttpDelete("DeleteUserAsync")]
+    public async Task<IActionResult> DeleteUserAsync(string username)
+    {
+        var deleteUser = await _authenticationService.DeleteUserAsync(username);
+
+        if (deleteUser is null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(deleteUser);
+    }
+
+    [HttpPost("RegisterWithGoogle")]
+    public async Task<IActionResult> RegisterWithGoogle(RegisterWithGoogleDto model)
+    {
+        var registerWithGoogle = await _authenticationService.RegisterWithGoogleAsync(model);
+
+        if (registerWithGoogle is null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return CreatedAtAction(nameof(RegisterWithGoogle), registerWithGoogle);
+    }
+
+    [HttpPost("LoginWithGoogleAsync")]
+    public async Task<IActionResult> LoginWithGoogleAsync(LoginWithGoogleDto model)
+    {
+        var loginWithGoogleAsync = await _authenticationService.LoginWithGoogleAsync(model);
+
+        if (loginWithGoogleAsync is null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return CreatedAtAction(nameof(RegisterWithGoogle), loginWithGoogleAsync);
+    }
 }

@@ -1,7 +1,6 @@
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Responses;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace GistBlog.BLL.Services.Contracts;
 
@@ -20,10 +19,11 @@ public interface IAuthenticationService
     Task<Status> DeleteRoleAsync(string roleName);
     Task<Status> EditUserRoleAsync([FromBody] EditUserRoleDto model);
     Task<Status> DeleteUserRoleAsync([FromBody] DeleteUserRoleDto model);
-    Task<List<string>> GetAllRolesAsync();
-    Task<List<string>> GetUserRolesAsync(string username);
-    Task<List<string>> GetAllUsersAndRolesAsync();
+    Task<List<string>?> GetAllRolesAsync();
+    Task<List<string>?> GetUserRolesAsync(string username);
+    Task<List<string>?> GetAllUsersAndRolesAsync();
     Task<Status> DeleteUserAsync(string username);
     Task<Status> RegisterWithGoogleAsync(RegisterWithGoogleDto model);
     Task<Status> LoginWithGoogleAsync(LoginWithGoogleDto model);
+    Task<List<string>?> GetAllUsersAsync();
 }

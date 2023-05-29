@@ -15,21 +15,19 @@ namespace GistBlog.BLL.Services.Implementation;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly DataContext _context;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly ITokenService _tokenService;
-    private readonly EmailSettings _emailConfig;
-    private readonly IMailjetService _mailjetService;
     private readonly IConfiguration _configuration;
+    private readonly DataContext _context;
+    private readonly IMailjetService _mailjetService;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly ITokenService _tokenService;
+    private readonly UserManager<AppUser> _userManager;
 
     public AuthenticationService(
         DataContext context,
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ITokenService tokenService,
-        EmailSettings emailConfig,
         IMailjetService mailjetService,
         IConfiguration configuration,
         SignInManager<AppUser> signInManager
@@ -39,7 +37,6 @@ public class AuthenticationService : IAuthenticationService
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
-        _emailConfig = emailConfig;
         _mailjetService = mailjetService;
         _configuration = configuration;
         _signInManager = signInManager;
@@ -66,7 +63,7 @@ public class AuthenticationService : IAuthenticationService
             return status;
         }
 
-        var emailExist = await _userManager.FindByNameAsync(model.Email);
+        var emailExist = await _userManager.FindByEmailAsync(model.Email);
         if (emailExist != null)
         {
             status.StatusCode = 0;
@@ -74,7 +71,7 @@ public class AuthenticationService : IAuthenticationService
             return status;
         }
 
-        var user = new AppUser()
+        var user = new AppUser
         {
             UserName = model.Username,
             SecurityStamp = Guid.NewGuid().ToString(),
@@ -112,7 +109,7 @@ public class AuthenticationService : IAuthenticationService
         if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
         {
             var userRoles = await _userManager.GetRolesAsync(user);
-            var authClaims = new List<Claim>()
+            var authClaims = new List<Claim>
             {
                 new(ClaimTypes.Name, user.UserName),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -124,7 +121,7 @@ public class AuthenticationService : IAuthenticationService
             var tokenInfo = await _context.TokenInfos.FirstOrDefaultAsync(x => x.Username == user.UserName);
             if (tokenInfo == null)
             {
-                var info = new TokenInfo()
+                var info = new TokenInfo
                 {
                     Username = user.UserName,
                     RefreshToken = refreshToken,
@@ -147,7 +144,7 @@ public class AuthenticationService : IAuthenticationService
                 throw new Exception(ex.Message);
             }
 
-            return new LoginResponse()
+            return new LoginResponse
             {
                 Name = user.Fullname,
                 Username = user.UserName,
@@ -160,7 +157,7 @@ public class AuthenticationService : IAuthenticationService
         }
 
         // Login failed condition
-        return new LoginResponse()
+        return new LoginResponse
         {
             StatusCode = 0,
             Message = "Invalid username or password",
@@ -319,6 +316,15 @@ public class AuthenticationService : IAuthenticationService
             return status;
         }
 
+        var emailExist = await _userManager.FindByEmailAsync(model.Email);
+
+        if (emailExist != null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Email already exists.";
+            return status;
+        }
+
         var user = new AppUser
         {
             UserName = model.Username,
@@ -345,7 +351,7 @@ public class AuthenticationService : IAuthenticationService
             await _userManager.AddToRoleAsync(user, UserRole.Admin);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully registered";
+        status.Message = "Successfully registered";
         return status;
     }
 
@@ -365,7 +371,7 @@ public class AuthenticationService : IAuthenticationService
                 await _roleManager.CreateAsync(new IdentityRole(role));
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully created roles";
+        status.Message = "Successfully created roles";
         return status;
     }
 
@@ -399,7 +405,7 @@ public class AuthenticationService : IAuthenticationService
         foreach (var role in roles) await _userManager.AddToRoleAsync(user, role);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully assigned roles";
+        status.Message = "Successfully assigned roles";
         return status;
     }
 
@@ -426,7 +432,7 @@ public class AuthenticationService : IAuthenticationService
         await _roleManager.UpdateAsync(role);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully edited role";
+        status.Message = "Successfully edited role";
         return status;
     }
 
@@ -452,7 +458,7 @@ public class AuthenticationService : IAuthenticationService
         await _roleManager.DeleteAsync(role);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully deleted role";
+        status.Message = "Successfully deleted role";
         return status;
     }
 
@@ -487,7 +493,7 @@ public class AuthenticationService : IAuthenticationService
         await _userManager.AddToRoleAsync(user, role.Name);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully edited user role";
+        status.Message = "Successfully edited user role";
         return status;
     }
 
@@ -521,12 +527,12 @@ public class AuthenticationService : IAuthenticationService
         await _userManager.RemoveFromRoleAsync(user, role.Name);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully deleted user role";
+        status.Message = "Successfully deleted user role";
         return status;
     }
 
     // get all roles and permissions
-    public async Task<List<string>> GetAllRolesAsync()
+    public async Task<List<string>?> GetAllRolesAsync()
     {
         var status = new Status();
         var roles = await _roleManager.Roles.ToListAsync();
@@ -541,24 +547,8 @@ public class AuthenticationService : IAuthenticationService
         return roles.Select(x => x.Name).ToList();
     }
 
-    // get all users and roles
-    public async Task<List<string>> GetAllUsersAsync()
-    {
-        var status = new Status();
-        var users = await _userManager.Users.ToListAsync();
-
-        if (users is null)
-        {
-            status.StatusCode = 0;
-            status.Message = "Not found!";
-            return null;
-        }
-
-        return users.Select(x => x.UserName).ToList();
-    }
-
     // get user and specific role
-    public async Task<List<string>> GetUserRolesAsync(string username)
+    public async Task<List<string>?> GetUserRolesAsync(string username)
     {
         var status = new Status();
         var user = await _userManager.FindByNameAsync(username);
@@ -574,7 +564,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     // get all users and specific roles
-    public async Task<List<string>> GetAllUsersAndRolesAsync()
+    public async Task<List<string>?> GetAllUsersAndRolesAsync()
     {
         var status = new Status();
         var users = await _userManager.Users.ToListAsync();
@@ -618,7 +608,7 @@ public class AuthenticationService : IAuthenticationService
         await _userManager.DeleteAsync(user);
 
         status.StatusCode = 1;
-        status.Message = "Sucessfully deleted user";
+        status.Message = "Successfully deleted user";
         return status;
     }
 
@@ -644,7 +634,7 @@ public class AuthenticationService : IAuthenticationService
         }
 
         // Create a new user using Google information
-        var user = new AppUser()
+        var user = new AppUser
         {
             UserName = model.Email,
             Email = model.Email,
@@ -714,4 +704,22 @@ public class AuthenticationService : IAuthenticationService
         status.Message = "User logged in successfully with Google authentication";
         return status;
     }
+
+    // get all users and roles
+    public async Task<List<string>?> GetAllUsersAsync()
+    {
+        var status = new Status();
+        var users = await _userManager.Users.ToListAsync();
+
+        if (users is null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Not found!";
+            return null;
+        }
+
+        return users.Select(x => x.UserName).ToList();
+    }
+
+    // two factor authentication
 }

@@ -1,6 +1,5 @@
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Entities.DTOs;
-using GistBlog.DAL.Entities.Models.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -164,7 +163,7 @@ public class AuthorizationController : ControllerBase
         return Ok(deleteUserRoleAsync);
     }
 
-    [HttpPost("GetAllRolesAsync")]
+    [HttpGet("GetAllRolesAsync")]
     public async Task<IActionResult> GetAllRolesAsync()
     {
         var getRoles = await _authenticationService.GetAllRolesAsync();
@@ -228,5 +227,16 @@ public class AuthorizationController : ControllerBase
             return StatusCode(StatusCodes.Status400BadRequest);
 
         return CreatedAtAction(nameof(RegisterWithGoogle), loginWithGoogleAsync);
+    }
+
+    [HttpGet("GetAllUsersAsync")]
+    public async Task<IActionResult> GetAllUsersAsync()
+    {
+        var getAllUsersAsync = await _authenticationService.GetAllUsersAsync();
+
+        if (getAllUsersAsync is null)
+            return StatusCode(StatusCodes.Status404NotFound);
+
+        return Ok(getAllUsersAsync);
     }
 }

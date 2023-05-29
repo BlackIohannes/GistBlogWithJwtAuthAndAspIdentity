@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GistBlog.DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230426065757_added-image-url")]
-    partial class addedimageurl
+    [Migration("20230529182051_modified AppUser  by removing VerifyToken object")]
+    partial class modifiedAppUserbyremovingVerifyTokenobject
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GistBlog.DAL.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230521101014_email-implementation")]
-    partial class emailimplementation
+    [Migration("20230527140904_Initial_migration")]
+    partial class Initial_migration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

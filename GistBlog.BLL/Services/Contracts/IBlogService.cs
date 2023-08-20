@@ -13,4 +13,5 @@ public interface IBlogService
     Task<bool> UpdateBlogAsync(UpdateBlogDto blogDto);
     Task<BlogResult> DeleteBlogAsync(Guid id);
     Task<Status> UploadBlogImagesAsync(string id, IFormFile file);
+    Task<IEnumerable<BlogDto>> GetAllBlogsIncludingDeletedBlogs();
 }

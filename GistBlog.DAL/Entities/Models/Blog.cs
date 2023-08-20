@@ -6,11 +6,11 @@ namespace GistBlog.DAL.Entities.Models;
 
 public class Blog : BaseModel
 {
-    public string Title { get; set; }
-    public string Description { get; set; }
+    public string? Title { get; set; }
+    public string? Description { get; set; }
     public Category Category { get; set; }
     public string? ImageUrl { get; set; }
 
-    [ForeignKey("AppUser")] public string AppUserId { get; set; }
-    public AppUser AppUser { get; set; }
+    [ForeignKey("AppUser")] public string? AppUserId { get; set; }
+    public AppUser? AppUser { get; set; }
 }

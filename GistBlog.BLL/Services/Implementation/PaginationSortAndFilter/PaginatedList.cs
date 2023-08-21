@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace GistBlog.BLL.Services.Implementation;
+namespace GistBlog.BLL.Services.Implementation.PaginationSortAndFilter;
 
 public class PaginatedList<T> : List<T>
 {
@@ -19,6 +19,7 @@ public class PaginatedList<T> : List<T>
     public bool PreviousPage => PageIndex > 1;
     public bool NextPage => PageIndex < TotalPages;
 
+    // pagination action
     public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> source, int pageIndex, int pageSize)
     {
         var count = await source.CountAsync();

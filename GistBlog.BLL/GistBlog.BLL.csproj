@@ -7,7 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\GistBlog.DAL\GistBlog.DAL.csproj" />
+        <ProjectReference Include="..\GistBlog.DAL\GistBlog.DAL.csproj"/>
     </ItemGroup>
+
 
 </Project>

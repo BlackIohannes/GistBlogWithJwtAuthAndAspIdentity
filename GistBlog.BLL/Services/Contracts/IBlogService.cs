@@ -1,4 +1,4 @@
-using GistBlog.BLL.Services.Implementation;
+using GistBlog.BLL.Services.Implementation.PaginationSortAndFilter;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Responses;
 using Microsoft.AspNetCore.Http;

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using GistBlog.BLL.Services.Contracts;
+using GistBlog.BLL.Services.Implementation.PaginationSortAndFilter;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models;
@@ -30,11 +31,12 @@ public class BlogService : IBlogService
         _userManager = userManager;
     }
 
+ 
+
     public async Task<PaginatedList<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
-        var queryableBlogs =
-            _blogRepository.GetQueryable(); // Assuming there's a method to get IQueryable<Blog> from the repository
-
+        var queryableBlogs = _blogRepository.GetQueryable().OrderByDescending(x => x.DateCreated);
+    
         var paginatedBlogs = await PaginatedList<BlogDto>.CreateAsync(
             queryableBlogs.Select(x => new BlogDto
             {
@@ -47,31 +49,9 @@ public class BlogService : IBlogService
             pageIndex,
             pageSize
         );
-
+    
         return paginatedBlogs;
     }
-
-    // public async Task<IEnumerable<BlogDto>> GetAllUserBlogsAsync(string id)
-    // {
-    //     var user = await _userManager.FindByIdAsync(id);
-    //
-    //     if (user == null)
-    //         throw new NotFoundException("User not found.");
-    //
-    //     var blogs = _blogRepository.GetQueryable(x => x.AppUserId == id);
-    //
-    //     if (blogs == null)
-    //         throw new NotFoundException("Blogs not found.");
-    //
-    //     return blogs.Select(x => new BlogDto
-    //     {
-    //         AppUserId = x.AppUserId,
-    //         Title = x.Title,
-    //         Description = x.Description,
-    //         Category = x.Category,
-    //         ImageUrl = x.ImageUrl
-    //     });
-    // }
 
     public async Task<BlogResult> AddBlogAsync(BlogDto blogDto)
     {
@@ -252,7 +232,7 @@ public class BlogService : IBlogService
         if (user == null)
             throw new NotFoundException("User not found.");
 
-        var blogsQuery = _blogRepository.GetQueryable(x => x.AppUserId == id);
+        var blogsQuery = _blogRepository.GetQueryable(x => x.AppUserId == id).OrderByDescending(x => x.DateCreated);
 
         if (blogsQuery == null)
             throw new NotFoundException("Blogs not found.");
@@ -273,5 +253,11 @@ public class BlogService : IBlogService
         });
 
         return new PaginatedList<BlogDto>(blogDtos, paginatedBlogs.TotalCount, pageIndex, pageSize);
+    }
+
+    public Task<PaginatedList<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize, string sortBy, string sortOrder,
+        string searchTerm)
+    {
+        throw new System.NotImplementedException();
     }
 }

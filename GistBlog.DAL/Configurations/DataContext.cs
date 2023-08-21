@@ -12,6 +12,12 @@ public class DataContext : IdentityDbContext<AppUser>
     {
     }
 
-    public DbSet<Blog> Blogs { get; set; }
-    public DbSet<TokenInfo> TokenInfos { get; set; }
+    public DbSet<Blog>? Blogs { get; set; }
+    public DbSet<TokenInfo>? TokenInfos { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<Blog>().HasQueryFilter(b => !b.IsDeleted);
+    }
 }

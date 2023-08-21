@@ -1,6 +1,5 @@
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Entities.DTOs;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -31,9 +30,9 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "GetAllBlogsAsync")]
     [HttpGet("GetAllBlogsAsync")]
-    public async Task<IActionResult> GetAllBlogsAsync()
+    public async Task<IActionResult> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
-        var blogs = await _blogService.GetAllBlogsAsync();
+        var blogs = await _blogService.GetAllBlogsAsync(pageIndex, pageSize);
 
         if (blogs == null)
             return StatusCode(StatusCodes.Status400BadRequest);
@@ -43,9 +42,9 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "GetBlogs")]
     [HttpGet("GetAllUserBlogs")]
-    public async Task<IActionResult> GetBlogs(string id)
+    public async Task<IActionResult> GetAllUserBlogsAsync(string id, int pageIndex, int pageSize)
     {
-        var blogs = await _blogService.GetAllUserBlogsAsync(id);
+        var blogs = await _blogService.GetAllUserBlogsAsync(id, pageIndex, pageSize);
 
         if (blogs == null)
             return StatusCode(StatusCodes.Status400BadRequest);
@@ -70,16 +69,12 @@ public class BlogController : ControllerBase
     public async Task<IActionResult> UpdateBlog([FromBody] UpdateBlogDto blogDto)
     {
         var blog = await _blogService.UpdateBlogAsync(blogDto);
-
-        if (blog == null)
-            return StatusCode(StatusCodes.Status400BadRequest);
-
         return Ok(blog);
     }
 
     [SwaggerOperation(Summary = "DeleteBlog")]
-    [Authorize(Roles = "Admin")]
-    [HttpGet("DeleteBlogById")]
+    // [Authorize(Roles = "Admin")]
+    [HttpDelete("DeleteBlogById")]
     public async Task<IActionResult> DeleteBlog(Guid id)
     {
         var blog = await _blogService.DeleteBlogAsync(id);
@@ -100,5 +95,16 @@ public class BlogController : ControllerBase
             return StatusCode(StatusCodes.Status400BadRequest);
 
         return Ok(blog);
+    }
+
+    [HttpGet("GetAllBlogsIncludingDeletedBlogs")]
+    public async Task<IActionResult> GetAllBlogsIncludingDeletedBlogs()
+    {
+        var blogs = await _blogService.GetAllBlogsIncludingDeletedBlogs();
+
+        if (blogs == null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(blogs);
     }
 }

@@ -30,9 +30,9 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "GetAllBlogsAsync")]
     [HttpGet("GetAllBlogsAsync")]
-    public async Task<IActionResult> GetAllBlogsAsync()
+    public async Task<IActionResult> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
-        var blogs = await _blogService.GetAllBlogsAsync();
+        var blogs = await _blogService.GetAllBlogsAsync(pageIndex, pageSize);
 
         if (blogs == null)
             return StatusCode(StatusCodes.Status400BadRequest);
@@ -42,9 +42,9 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "GetBlogs")]
     [HttpGet("GetAllUserBlogs")]
-    public async Task<IActionResult> GetBlogs(string id)
+    public async Task<IActionResult> GetAllUserBlogsAsync(string id, int pageIndex, int pageSize)
     {
-        var blogs = await _blogService.GetAllUserBlogsAsync(id);
+        var blogs = await _blogService.GetAllUserBlogsAsync(id, pageIndex, pageSize);
 
         if (blogs == null)
             return StatusCode(StatusCodes.Status400BadRequest);

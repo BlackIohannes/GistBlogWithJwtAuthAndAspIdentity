@@ -30,44 +30,48 @@ public class BlogService : IBlogService
         _userManager = userManager;
     }
 
-    public async Task<IEnumerable<BlogDto>> GetAllBlogsAsync()
+    public async Task<PaginatedList<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
-        var blogs = await _blogRepository.GetAllAsync();
+        var queryableBlogs =
+            _blogRepository.GetQueryable(); // Assuming there's a method to get IQueryable<Blog> from the repository
 
-        if (blogs is null)
-            throw new NotFoundException("Blogs not found.");
+        var paginatedBlogs = await PaginatedList<BlogDto>.CreateAsync(
+            queryableBlogs.Select(x => new BlogDto
+            {
+                AppUserId = x.AppUserId,
+                Title = x.Title,
+                Description = x.Description,
+                Category = x.Category,
+                ImageUrl = x.ImageUrl
+            }),
+            pageIndex,
+            pageSize
+        );
 
-        return blogs.Select(x => new BlogDto
-        {
-            AppUserId = x.AppUserId,
-            Title = x.Title,
-            Description = x.Description,
-            Category = x.Category,
-            ImageUrl = x.ImageUrl
-        });
+        return paginatedBlogs;
     }
 
-    public async Task<IEnumerable<BlogDto>> GetAllUserBlogsAsync(string id)
-    {
-        var user = await _userManager.FindByIdAsync(id);
-
-        if (user == null)
-            throw new NotFoundException("User not found.");
-
-        var blogs = _blogRepository.GetQueryable(x => x.AppUserId == id);
-
-        if (blogs == null)
-            throw new NotFoundException("Blogs not found.");
-
-        return blogs.Select(x => new BlogDto
-        {
-            AppUserId = x.AppUserId,
-            Title = x.Title,
-            Description = x.Description,
-            Category = x.Category,
-            ImageUrl = x.ImageUrl
-        });
-    }
+    // public async Task<IEnumerable<BlogDto>> GetAllUserBlogsAsync(string id)
+    // {
+    //     var user = await _userManager.FindByIdAsync(id);
+    //
+    //     if (user == null)
+    //         throw new NotFoundException("User not found.");
+    //
+    //     var blogs = _blogRepository.GetQueryable(x => x.AppUserId == id);
+    //
+    //     if (blogs == null)
+    //         throw new NotFoundException("Blogs not found.");
+    //
+    //     return blogs.Select(x => new BlogDto
+    //     {
+    //         AppUserId = x.AppUserId,
+    //         Title = x.Title,
+    //         Description = x.Description,
+    //         Category = x.Category,
+    //         ImageUrl = x.ImageUrl
+    //     });
+    // }
 
     public async Task<BlogResult> AddBlogAsync(BlogDto blogDto)
     {
@@ -239,5 +243,35 @@ public class BlogService : IBlogService
         }).ToList();
 
         return blogDtos;
+    }
+
+    public async Task<PaginatedList<BlogDto>> GetAllUserBlogsAsync(string id, int pageIndex, int pageSize)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        var blogsQuery = _blogRepository.GetQueryable(x => x.AppUserId == id);
+
+        if (blogsQuery == null)
+            throw new NotFoundException("Blogs not found.");
+
+        var paginatedBlogs = await PaginatedList<Blog>.CreateAsync(
+            blogsQuery,
+            pageIndex,
+            pageSize
+        );
+
+        var blogDtos = paginatedBlogs.Select(x => new BlogDto
+        {
+            AppUserId = x.AppUserId,
+            Title = x.Title,
+            Description = x.Description,
+            Category = x.Category,
+            ImageUrl = x.ImageUrl
+        });
+
+        return new PaginatedList<BlogDto>(blogDtos, paginatedBlogs.TotalCount, pageIndex, pageSize);
     }
 }

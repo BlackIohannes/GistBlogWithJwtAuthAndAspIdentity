@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using GistBlog.BLL.Services.Contracts;
-using GistBlog.BLL.Services.Implementation.PaginationSortAndFilter;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models;
@@ -33,11 +32,11 @@ public class BlogService : IBlogService
 
  
 
-    public async Task<PaginatedList<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
+    public async Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
         var queryableBlogs = _blogRepository.GetQueryable().OrderByDescending(x => x.DateCreated);
     
-        var paginatedBlogs = await PaginatedList<BlogDto>.CreateAsync(
+        var paginatedBlogs = await PaginatedListService<BlogDto>.CreateAsync(
             queryableBlogs.Select(x => new BlogDto
             {
                 AppUserId = x.AppUserId,
@@ -225,7 +224,7 @@ public class BlogService : IBlogService
         return blogDtos;
     }
 
-    public async Task<PaginatedList<BlogDto>> GetAllUserBlogsAsync(string id, int pageIndex, int pageSize)
+    public async Task<PaginatedListService<BlogDto>> GetAllUserBlogsAsync(string id, int pageIndex, int pageSize)
     {
         var user = await _userManager.FindByIdAsync(id);
 
@@ -237,7 +236,7 @@ public class BlogService : IBlogService
         if (blogsQuery == null)
             throw new NotFoundException("Blogs not found.");
 
-        var paginatedBlogs = await PaginatedList<Blog>.CreateAsync(
+        var paginatedBlogs = await PaginatedListService<Blog>.CreateAsync(
             blogsQuery,
             pageIndex,
             pageSize
@@ -252,10 +251,10 @@ public class BlogService : IBlogService
             ImageUrl = x.ImageUrl
         });
 
-        return new PaginatedList<BlogDto>(blogDtos, paginatedBlogs.TotalCount, pageIndex, pageSize);
+        return new PaginatedListService<BlogDto>(blogDtos, paginatedBlogs.TotalCount, pageIndex, pageSize);
     }
 
-    public Task<PaginatedList<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize, string sortBy, string sortOrder,
+    public Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize, string sortBy, string sortOrder,
         string searchTerm)
     {
         throw new System.NotImplementedException();

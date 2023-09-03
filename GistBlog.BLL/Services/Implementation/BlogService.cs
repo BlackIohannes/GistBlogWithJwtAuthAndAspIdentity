@@ -30,8 +30,6 @@ public class BlogService : IBlogService
         _userManager = userManager;
     }
 
- 
-
     public async Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
         var queryableBlogs = _blogRepository.GetQueryable().OrderByDescending(x => x.DateCreated);

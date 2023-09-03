@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
@@ -17,8 +19,11 @@ namespace GistBlog.BLL.Services.Implementation;
 
 public class BlogService : IBlogService
 {
+    private readonly string _apiKey = "797915466192946";
     private readonly IRepository<Blog> _blogRepository;
+    private readonly string _cloudName = "dmz8tpotk";
     private readonly DataContext _context;
+    private readonly string _secretKey = "g5iSlFlb7ebmv45I3lCQRjamVEU";
     private readonly IUnitOfWork _unitOfWork;
     private readonly UserManager<AppUser> _userManager;
 
@@ -33,63 +38,80 @@ public class BlogService : IBlogService
     public async Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
     {
         var queryableBlogs = _blogRepository.GetQueryable().OrderByDescending(x => x.DateCreated);
-    
+
         var paginatedBlogs = await PaginatedListService<BlogDto>.CreateAsync(
             queryableBlogs.Select(x => new BlogDto
             {
                 AppUserId = x.AppUserId,
                 Title = x.Title,
                 Description = x.Description,
-                Category = x.Category,
-                ImageUrl = x.ImageUrl
+                Category = x.Category
+                // ImageUrl = x.ImageUrl
             }),
             pageIndex,
             pageSize
         );
-    
+
         return paginatedBlogs;
     }
 
     public async Task<BlogResult> AddBlogAsync(BlogDto blogDto)
     {
+        var _cloudinary = new Cloudinary(new Account(_cloudName, _apiKey, _secretKey));
+        var result = new ImageUploadResult();
+        var file = blogDto.File;
+
         var userExist = await _userManager.FindByIdAsync(blogDto.AppUserId);
 
         if (userExist == null)
             throw new KeyNotFoundException(
                 $"User Id: {blogDto.AppUserId} does not match with the post.");
 
-        var newBlog = new Blog
+        if (file?.Length > 0)
         {
-            AppUserId = blogDto.AppUserId,
-            Title = blogDto.Title,
-            Description = blogDto.Description,
-            Category = blogDto.Category,
-            ImageUrl = blogDto.ImageUrl
-        };
-
-        var createdBlog = await _blogRepository.AddAsync(newBlog);
-
-        if (createdBlog != null)
-
-            return new BlogResult
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
             {
-                Blogs = new List<BlogDto>
-                {
-                    new()
-                    {
-                        Title = createdBlog.Title,
-                        Description = createdBlog.Description,
-                        Category = createdBlog.Category,
-                        AppUserId = createdBlog.AppUserId,
-                        ImageUrl = createdBlog.ImageUrl
-                    }
-                },
-                Result = true,
-                Message = new List<string>
-                {
-                    "Blog was successfully added"
-                }
+                File = new FileDescription(file.FileName, stream),
+                Transformation = new Transformation().Height(500).Width(500).Crop("fill")
             };
+
+            result = await _cloudinary.UploadAsync(uploadParams);
+
+            var newBlog = new Blog
+            {
+                AppUserId = blogDto.AppUserId,
+                Title = blogDto.Title,
+                Description = blogDto.Description,
+                Category = blogDto.Category,
+                ImageUrl = result.SecureUrl.ToString()
+            };
+
+            var createdBlog = await _blogRepository.AddAsync(newBlog);
+
+            if (createdBlog != null)
+
+                return new BlogResult
+                {
+                    Blogs = new List<BlogDto>
+                    {
+                        new()
+                        {
+                            Title = createdBlog.Title,
+                            Description = createdBlog.Description,
+                            Category = createdBlog.Category,
+                            AppUserId = createdBlog.AppUserId
+                            // ImageUrl = createdBlog.ImageUrl
+                        }
+                    },
+                    Result = true,
+                    Message = new List<string>
+                    {
+                        "Blog was successfully added"
+                    }
+                };
+        }
+
         throw new NotImplementedException("Something went wrong. Was unable to add blog post.");
     }
 
@@ -105,13 +127,17 @@ public class BlogService : IBlogService
             AppUserId = blog.AppUserId,
             Title = blog.Title,
             Description = blog.Description,
-            Category = blog.Category,
-            ImageUrl = blog.ImageUrl
+            Category = blog.Category
+            // ImageUrl = blog.ImageUrl
         };
     }
 
     public async Task<bool> UpdateBlogAsync(UpdateBlogDto blogDto)
     {
+        var _cloudinary = new Cloudinary(new Account(_cloudName, _apiKey, _secretKey));
+        var result = new ImageUploadResult();
+        var file = blogDto.File;
+
         var user = await _userManager.FindByIdAsync(blogDto.AppUserId);
 
         if (user == null)
@@ -119,12 +145,21 @@ public class BlogService : IBlogService
 
         var userBlog = await _blogRepository.GetSingleByAsync(x => x.Id == blogDto.Id);
 
-        if (userBlog != null)
+        if (userBlog != null && file?.Length > 0)
         {
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Transformation = new Transformation().Height(500).Width(500).Crop("fill")
+            };
+
+            result = await _cloudinary.UploadAsync(uploadParams);
+
             userBlog.Title = blogDto.Title;
             userBlog.Description = blogDto.Description;
             userBlog.Category = blogDto.Category;
-            userBlog.ImageUrl = blogDto.ImageUrl;
+            userBlog.ImageUrl = result.SecureUrl.ToString();
 
             var updatedBlog = await _blogRepository.UpdateAsync(userBlog);
 
@@ -215,7 +250,7 @@ public class BlogService : IBlogService
             Title = blog.Title,
             Description = blog.Description,
             Category = blog.Category,
-            ImageUrl = blog.ImageUrl,
+            // ImageUrl = blog.ImageUrl,
             AppUserId = blog.AppUserId
         }).ToList();
 
@@ -245,14 +280,15 @@ public class BlogService : IBlogService
             AppUserId = x.AppUserId,
             Title = x.Title,
             Description = x.Description,
-            Category = x.Category,
-            ImageUrl = x.ImageUrl
+            Category = x.Category
+            // ImageUrl = x.ImageUrl
         });
 
         return new PaginatedListService<BlogDto>(blogDtos, paginatedBlogs.TotalCount, pageIndex, pageSize);
     }
 
-    public Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize, string sortBy, string sortOrder,
+    public Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize, string sortBy,
+        string sortOrder,
         string searchTerm)
     {
         throw new System.NotImplementedException();

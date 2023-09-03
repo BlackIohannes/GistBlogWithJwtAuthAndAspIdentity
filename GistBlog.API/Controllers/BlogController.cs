@@ -18,7 +18,7 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "AddBlog")]
     [HttpPost("CreateNewBlogPost")]
-    public async Task<IActionResult> AddBlog([FromBody] BlogDto blogDto)
+    public async Task<IActionResult> AddBlog([FromForm] BlogDto blogDto)
     {
         var result = await _blogService.AddBlogAsync(blogDto);
 
@@ -66,7 +66,7 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "UpdateBlog")]
     [HttpPost("UpdateUserBlog")]
-    public async Task<IActionResult> UpdateBlog([FromBody] UpdateBlogDto blogDto)
+    public async Task<IActionResult> UpdateBlog([FromForm] UpdateBlogDto blogDto)
     {
         var blog = await _blogService.UpdateBlogAsync(blogDto);
         return Ok(blog);

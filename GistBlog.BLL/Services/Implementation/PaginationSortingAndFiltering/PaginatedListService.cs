@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace GistBlog.BLL.Services.Implementation;
+namespace GistBlog.BLL.Services.Implementation.PaginationSortingAndFiltering;
 
 public class PaginatedListService<T> : List<T>
 {

@@ -102,26 +102,6 @@ public class BlogService : IBlogService
         return paginatedBlogs;
     }
 
-    // public async Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
-    // {
-    //     var queryableBlogs = _blogRepository.GetQueryable().OrderByDescending(x => x.DateCreated);
-    //
-    //     var paginatedBlogs = await PaginatedListService<BlogDto>.CreateAsync(
-    //         queryableBlogs.Select(x => new BlogDto
-    //         {
-    //             AppUserId = x.AppUserId,
-    //             Title = x.Title,
-    //             Description = x.Description,
-    //             Category = x.Category
-    //             // ImageUrl = x.ImageUrl
-    //         }),
-    //         pageIndex,
-    //         pageSize
-    //     );
-    //
-    //     return paginatedBlogs;
-    // }
-
     public async Task<BlogResult> AddBlogAsync(BlogDto blogDto)
     {
         var _cloudinary = new Cloudinary(new Account(_cloudName, _apiKey, _secretKey));

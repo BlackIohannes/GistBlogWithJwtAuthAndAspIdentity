@@ -26,5 +26,6 @@ public static class Middlewares
             building.AddConsole();
             building.AddDebug();
         });
+        services.AddScoped<ICommentService, CommentService>();
     }
 }

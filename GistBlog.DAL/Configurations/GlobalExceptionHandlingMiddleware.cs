@@ -32,7 +32,7 @@ public class GlobalExceptionHandlingMiddleware
     private static Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
         HttpStatusCode status;
-        string stackTrace;
+        string? stackTrace;
         string message;
 
         var exceptionType = ex.GetType();

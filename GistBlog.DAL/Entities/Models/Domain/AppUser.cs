@@ -9,4 +9,5 @@ public class AppUser : IdentityUser
     public IList<Blog> Blogs { get; set; } = new List<Blog>();
 
     public IEnumerable<Comment> Comments { get; set; } = null!;
+    public ICollection<ProductTransaction> ProductTransactions { get; set; }
 }

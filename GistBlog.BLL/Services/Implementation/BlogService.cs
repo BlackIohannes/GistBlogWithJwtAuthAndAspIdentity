@@ -2,16 +2,19 @@ using System.Diagnostics;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using GistBlog.BLL.Services.Contracts;
+using GistBlog.BLL.Services.Implementation.PaginationSortingAndFiltering;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models;
 using GistBlog.DAL.Entities.Models.Domain;
 using GistBlog.DAL.Entities.Responses;
+using GistBlog.DAL.Enums;
 using GistBlog.DAL.Exceptions;
 using GistBlog.DAL.Repository.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using KeyNotFoundException = GistBlog.DAL.Exceptions.KeyNotFoundException;
 using NotImplementedException = GistBlog.DAL.Exceptions.NotImplementedException;
 
@@ -19,25 +22,69 @@ namespace GistBlog.BLL.Services.Implementation;
 
 public class BlogService : IBlogService
 {
-    private readonly string _apiKey = "797915466192946";
+    private const string _apiKey = "797915466192946";
+    private const string _cloudName = "dmz8tpotk";
+    private const string _secretKey = "g5iSlFlb7ebmv45I3lCQRjamVEU";
+
     private readonly IRepository<Blog> _blogRepository;
-    private readonly string _cloudName = "dmz8tpotk";
     private readonly DataContext _context;
-    private readonly string _secretKey = "g5iSlFlb7ebmv45I3lCQRjamVEU";
+    private readonly ILogger<Blog> _logger;
     private readonly IUnitOfWork _unitOfWork;
     private readonly UserManager<AppUser> _userManager;
 
-    public BlogService(DataContext context, IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+    public BlogService(DataContext context, IUnitOfWork unitOfWork, UserManager<AppUser> userManager,
+        ILogger<Blog> logger)
     {
         _context = context;
         _unitOfWork = unitOfWork;
         _blogRepository = _unitOfWork.GetRepository<Blog>();
         _userManager = userManager;
+        _logger = logger;
     }
 
-    public async Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize)
+    public async Task<PaginatedListService<BlogDto>> GetAllBlogsAsync(int pageIndex, int pageSize, string sortOrder,
+        string searchCategory)
     {
-        var queryableBlogs = _blogRepository.GetQueryable().OrderByDescending(x => x.DateCreated);
+        // Define the base query
+        var queryableBlogs = _blogRepository.GetQueryable();
+
+        // Apply sorting based on sortOrder parameter
+        switch (sortOrder)
+        {
+            case "title_asc":
+                queryableBlogs = queryableBlogs.OrderBy(x => x.Title);
+                break;
+            case "title_desc":
+                queryableBlogs = queryableBlogs.OrderByDescending(x => x.Title);
+                break;
+            case "date_asc":
+                queryableBlogs = queryableBlogs.OrderBy(x => x.DateCreated);
+                break;
+            case "date_desc":
+                queryableBlogs = queryableBlogs.OrderByDescending(x => x.DateCreated);
+                break;
+            default:
+                queryableBlogs = queryableBlogs.OrderByDescending(x => x.DateCreated);
+                break;
+        }
+
+        // Apply filtering based on searchCategory parameter
+        if (!string.IsNullOrEmpty(searchCategory))
+        {
+            _logger.LogInformation($"SearchCategory input: {searchCategory}");
+
+            searchCategory = searchCategory.ToLower();
+            if (Enum.TryParse<Category>(searchCategory, true, out var parsedCategory))
+            {
+                _logger.LogInformation($"Parsed Category: {parsedCategory}");
+
+                queryableBlogs = queryableBlogs.Where(x => x.Category == parsedCategory);
+            }
+            else
+            {
+                _logger.LogError($"Invalid searchCategory: {searchCategory}");
+            }
+        }
 
         var paginatedBlogs = await PaginatedListService<BlogDto>.CreateAsync(
             queryableBlogs.Select(x => new BlogDto

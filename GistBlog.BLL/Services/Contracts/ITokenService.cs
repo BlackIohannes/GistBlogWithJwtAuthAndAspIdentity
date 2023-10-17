@@ -7,5 +7,5 @@ public interface ITokenService
 {
     TokenResponse GetToken(IEnumerable<Claim> claims);
     string GetRefreshToken();
-    ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
+    ClaimsPrincipal GetPrincipalFromExpiredToken(string? token);
 }

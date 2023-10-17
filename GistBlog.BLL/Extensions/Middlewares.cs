@@ -4,6 +4,7 @@ using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.Models.Domain;
 using GistBlog.DAL.Repository.Contracts;
 using GistBlog.DAL.Repository.Implementations;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,11 +21,17 @@ public static class Middlewares
         services.AddScoped<EmailSettings>();
         services.Configure<MailjetSettings>(configuration.GetSection("MailjetSettings"));
         services.AddScoped<IMailjetService, MailjetService>();
-        services.AddAuthentication()
-            .AddGoogle(options =>
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddAuthentication(option =>
             {
-                options.ClientId = "53306076231-4jrvd3b85ue9dk7otluf5hrtq6keu9fv.apps.googleusercontent.com";
-                options.ClientSecret = "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";
-            });
+                option.DefaultAuthenticateScheme = GoogleDefaults.AuthenticationScheme;
+                option.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            })
+            .AddGoogle(options =>
+                {
+                    options.ClientId = configuration["Google:ClientId"];
+                    options.ClientSecret = configuration["Google:ClientSecret"];
+                }
+            );
     }
 }

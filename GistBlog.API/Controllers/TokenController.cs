@@ -28,8 +28,8 @@ public class TokenController : ControllerBase
         var accessToken = tokenRequestDto.AccessToken;
         var refreshToken = tokenRequestDto.RefreshToken;
         var principal = _tokenService.GetPrincipalFromExpiredToken(accessToken);
-        var username = principal.Identity.Name;
-        var user = await _context.TokenInfos.SingleOrDefaultAsync(x => x.Username == username);
+        var username = principal.Identity!.Name;
+        var user = await _context.TokenInfos!.SingleOrDefaultAsync(x => x.Username == username);
         if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryDate <= DateTime.Now)
             return BadRequest("Invalid client request");
 
@@ -39,7 +39,7 @@ public class TokenController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new RefreshTokenRequestDto()
+        return Ok(new RefreshTokenRequestDto
         {
             AccessToken = newAccessToken.TokenString,
             RefreshToken = newRefreshToken

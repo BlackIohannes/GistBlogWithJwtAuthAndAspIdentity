@@ -41,6 +41,8 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
+// builder.Services.AddHttpContextAccessor();
+
 #region Database connection configuration
 
 builder.Services.AddDbContext<DataContext>(options =>
@@ -88,7 +90,7 @@ builder.Services.UserRegistrationServices(builder.Configuration);
 
 #endregion
 
-builder.Services.AddHttpContextAccessor();
+//builder.Services.AddHttpContextAccessor();
 
 #region watchDog duration configuration
 
@@ -139,8 +141,9 @@ app.UseWatchDog(options =>
 
 #endregion
 
+app.AddGlobalErrorHandler();
+
 app.MapControllers();
 
-app.AddGlobalErrorHandler();
 
 app.Run();

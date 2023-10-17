@@ -29,7 +29,6 @@ namespace GistBlog.DAL.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AppUserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Category")
@@ -129,6 +128,54 @@ namespace GistBlog.DAL.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("GistBlog.DAL.Entities.Models.ProductTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("AppUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AppUserId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateDeleted")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateUpdated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TrxnRef")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId1");
+
+                    b.ToTable("ProductTransactions");
                 });
 
             modelBuilder.Entity("GistBlog.DAL.Entities.Tokens.TokenInfo", b =>
@@ -292,9 +339,16 @@ namespace GistBlog.DAL.Migrations
                 {
                     b.HasOne("GistBlog.DAL.Entities.Models.Domain.AppUser", "AppUser")
                         .WithMany("Blogs")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AppUserId");
+
+                    b.Navigation("AppUser");
+                });
+
+            modelBuilder.Entity("GistBlog.DAL.Entities.Models.ProductTransaction", b =>
+                {
+                    b.HasOne("GistBlog.DAL.Entities.Models.Domain.AppUser", "AppUser")
+                        .WithMany("ProductTransactions")
+                        .HasForeignKey("AppUserId1");
 
                     b.Navigation("AppUser");
                 });
@@ -353,6 +407,8 @@ namespace GistBlog.DAL.Migrations
             modelBuilder.Entity("GistBlog.DAL.Entities.Models.Domain.AppUser", b =>
                 {
                     b.Navigation("Blogs");
+
+                    b.Navigation("ProductTransactions");
                 });
 #pragma warning restore 612, 618
         }

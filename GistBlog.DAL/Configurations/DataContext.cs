@@ -1,5 +1,5 @@
 using GistBlog.DAL.Entities.Models;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

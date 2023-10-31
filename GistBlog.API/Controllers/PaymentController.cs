@@ -11,12 +11,15 @@ namespace GistBlog.API.Controllers;
 public class PaymentController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
-    // private readonly string _userId;
 
-    public PaymentController(IPaymentService paymentService)
+    private readonly HttpContext _httpContext;
+    private readonly string _userId;
+
+    public PaymentController(IPaymentService paymentService, HttpContext httpContext)
     {
         _paymentService = paymentService;
-        // _userId = HttpContext.User.FindFirstValue("Id");
+        _httpContext = httpContext;
+        _userId = HttpContext.User.FindFirstValue("Id");
     }
 
     [HttpPost]

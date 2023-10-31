@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Enums;
 
 namespace GistBlog.DAL.Entities.Models;

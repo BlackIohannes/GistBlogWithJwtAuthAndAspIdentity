@@ -6,7 +6,7 @@ using GistBlog.BLL.Services.Implementation.PaginationSortingAndFiltering;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Entities.Responses;
 using GistBlog.DAL.Enums;
 using GistBlog.DAL.Exceptions;

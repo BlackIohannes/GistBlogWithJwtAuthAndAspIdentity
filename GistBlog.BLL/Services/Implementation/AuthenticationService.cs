@@ -3,7 +3,7 @@ using System.Security.Claims;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Entities.Responses;
 using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity;

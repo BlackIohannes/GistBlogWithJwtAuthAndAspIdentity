@@ -1,7 +1,8 @@
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.BLL.Services.Implementation;
+using GistBlog.BLL.Services.Implementation.social;
 using GistBlog.DAL.Configurations;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Repository.Contracts;
 using GistBlog.DAL.Repository.Implementations;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -33,5 +34,6 @@ public static class Middlewares
                     options.ClientSecret = configuration["Google:ClientSecret"];
                 }
             );
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
     }
 }

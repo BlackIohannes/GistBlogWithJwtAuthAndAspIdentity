@@ -1,5 +1,5 @@
 using GistBlog.BLL.Services.Contracts;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using Mailjet.Client;
 using Mailjet.Client.Resources;
 using Microsoft.Extensions.Options;

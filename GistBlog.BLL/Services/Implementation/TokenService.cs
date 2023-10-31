@@ -3,7 +3,9 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using GistBlog.BLL.Services.Contracts;
+using GistBlog.DAL.Entities.DTOs.socials;
 using GistBlog.DAL.Entities.Responses;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -13,12 +15,14 @@ namespace GistBlog.BLL.Services.Implementation;
 public class TokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
+    private readonly IConfigurationSection _googleSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public TokenService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
+        _googleSettings = _configuration.GetSection("Google");
     }
 
     public TokenResponse GetToken(IEnumerable<Claim> claims)
@@ -69,4 +73,25 @@ public class TokenService : ITokenService
 
         return principal;
     }
+
+    public async Task<GoogleJsonWebSignature.Payload?> VerifyGoogleToken(GoogleAuthDto googleAuth)
+    {
+        try
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new List<string> { _googleSettings.GetSection("ClientId").Value }
+            };
+
+            var payload = await GoogleJsonWebSignature.ValidateAsync(googleAuth.AccessToken, settings);
+            return payload;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+    
+    // verify facebook token
+    // verify instagram token
 }

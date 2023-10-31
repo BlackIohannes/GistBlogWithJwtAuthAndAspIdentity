@@ -1,7 +1,7 @@
 using System.Text;
 using GistBlog.BLL.Extensions;
 using GistBlog.DAL.Configurations;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

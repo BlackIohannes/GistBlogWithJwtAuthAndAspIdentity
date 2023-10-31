@@ -3,7 +3,7 @@ using System.Security.Claims;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Entities.Responses;
 using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity;
@@ -148,9 +148,10 @@ public class AuthenticationService : IAuthenticationService
 
             return new LoginResponse
             {
+                Id = user.Id,
                 Name = user.Fullname,
                 Username = user.UserName,
-                Token = token.TokenString,
+                accessToken = token.TokenString,
                 RefreshToken = refreshToken,
                 Expiration = token.ValidTo,
                 StatusCode = 1,
@@ -163,7 +164,7 @@ public class AuthenticationService : IAuthenticationService
         {
             StatusCode = 0,
             Message = "Invalid username or password",
-            Token = "",
+            accessToken = "",
             Expiration = null
         };
     }
@@ -614,44 +615,6 @@ public class AuthenticationService : IAuthenticationService
         return status;
     }
 
-    // login using google oauth2
-    public async Task<Status> LoginWithGoogleAsync(LoginWithGoogleDto model)
-    {
-        var status = new Status();
-        // Check validations
-        if (string.IsNullOrEmpty(model.Email))
-        {
-            status.StatusCode = 0;
-            status.Message = "Please provide a valid email";
-            return status;
-        }
-
-        // Check if the user already exists
-        var existingUser = await _userManager.FindByEmailAsync(model.Email);
-        if (existingUser == null)
-        {
-            status.StatusCode = 0;
-            status.Message = "User does not exist";
-            return status;
-        }
-
-        // Attempt to login the user with Google OAuth2
-        var googleLoginInfo = new UserLoginInfo("Google", model.GoogleId, "Google");
-        var result = await _signInManager.ExternalLoginSignInAsync(googleLoginInfo.LoginProvider,
-            googleLoginInfo.ProviderKey, false, true);
-        if (!result.Succeeded)
-        {
-            status.StatusCode = 0;
-            status.Message = "Invalid login credentials";
-            return status;
-        }
-
-        // Login succeeded
-        status.StatusCode = 1;
-        status.Message = "User logged in successfully with Google authentication";
-        return status;
-    }
-
     // get all users and roles
     public async Task<List<string>?> GetAllUsersAsync()
     {
@@ -667,114 +630,4 @@ public class AuthenticationService : IAuthenticationService
 
         return users.Select(x => x.UserName).ToList();
     }
-
-    // register with google
-    public async Task<Status> RegisterWithGoogleAsync(RegisterWithGoogleDto model)
-    {
-        var status = new Status();
-
-        // Check if the user with the given GoogleId already exists
-        var user = await _userManager.FindByLoginAsync("Google", model.GoogleId);
-        if (user != null)
-        {
-            // User with GoogleId already exists, you can consider logging in the user here
-            status.StatusCode = 1;
-            status.Message = "User with GoogleId already registered.";
-            return status;
-        }
-
-        // User doesn't exist, proceed with registration
-        user = new AppUser
-        {
-            UserName = model.Email, // You can use Email as the username or customize as needed
-            SecurityStamp = Guid.NewGuid().ToString(),
-            Email = model.Email,
-            Fullname = model.Fullname,
-            EmailConfirmed = true // You might want to set this based on your requirements
-        };
-
-        // Create user
-        var result = await _userManager.CreateAsync(user);
-        if (!result.Succeeded)
-        {
-            status.StatusCode = 0;
-            status.Message = "User creation failed.";
-            return status;
-        }
-
-        // Add Google login to the user
-        var loginResult = await _userManager.AddLoginAsync(user, new UserLoginInfo("Google", model.GoogleId, "Google"));
-        if (!loginResult.Succeeded)
-        {
-            status.StatusCode = 0;
-            status.Message = "Google login failed.";
-            return status;
-        }
-
-        // Add roles if needed
-        if (!await _roleManager.RoleExistsAsync(UserRole.User))
-            await _roleManager.CreateAsync(new IdentityRole(UserRole.User));
-
-        if (await _roleManager.RoleExistsAsync(UserRole.User))
-            await _userManager.AddToRoleAsync(user, UserRole.User);
-
-        status.StatusCode = 1;
-        status.Message = "User successfully registered with Google.";
-        return status;
-    }
-
-    // register using google oauth2
-    // public async Task<Status> SigninWithGoogleAsync(RegisterWithGoogleDto model)
-    // {
-    //     var status = new Status();
-    //     // Check validations
-    //     if (string.IsNullOrEmpty(model.Email))
-    //     {
-    //         status.StatusCode = 0;
-    //         status.Message = "Please provide a valid email";
-    //         return status;
-    //     }
-    //
-    //     // Check if the user already exists
-    //     var existingUser = await _userManager.FindByEmailAsync(model.Email);
-    //     if (existingUser != null)
-    //     {
-    //         status.StatusCode = 0;
-    //         status.Message = "User already exists";
-    //         return status;
-    //     }
-    //
-    //     // Create a new user using Google information
-    //     var user = new AppUser
-    //     {
-    //         UserName = model.Email,
-    //         Email = model.Email,
-    //         Fullname = model.Fullname
-    //         // Set additional user properties as needed
-    //     };
-    //
-    //     // Attempt to register the user
-    //     var result = await _userManager.CreateAsync(user);
-    //     if (!result.Succeeded)
-    //     {
-    //         status.StatusCode = 0;
-    //         status.Message = "User registration failed";
-    //         return status;
-    //     }
-    //
-    //     // Add Google authentication to the user
-    //     var googleLoginInfo = new UserLoginInfo("Google", model.GoogleId, "Google");
-    //     result = await _userManager.AddLoginAsync(user, googleLoginInfo);
-    //     if (!result.Succeeded)
-    //     {
-    //         status.StatusCode = 0;
-    //         status.Message = "Failed to add Google authentication";
-    //         return status;
-    //     }
-    //
-    //     // Registration and Google authentication succeeded
-    //     status.StatusCode = 1;
-    //     status.Message = "User registered successfully with Google authentication";
-    //     return status;
-    // }
 }

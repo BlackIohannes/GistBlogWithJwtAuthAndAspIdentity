@@ -2,7 +2,7 @@
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models;
-using GistBlog.DAL.Entities.Models.Domain;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Exceptions;
 using GistBlog.DAL.Repository.Contracts;
 using Microsoft.AspNetCore.Identity;

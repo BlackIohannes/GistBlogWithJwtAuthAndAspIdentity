@@ -1,4 +1,4 @@
-namespace GistBlog.DAL.Entities.Models.Domain;
+namespace GistBlog.DAL.Entities.Models.UserEntities;
 
 public class EmailSettings
 {

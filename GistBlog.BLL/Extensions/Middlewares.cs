@@ -1,5 +1,6 @@
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.BLL.Services.Implementation;
+using GistBlog.BLL.Services.Implementation.social;
 using GistBlog.DAL.Configurations;
 using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Repository.Contracts;
@@ -33,5 +34,6 @@ public static class Middlewares
                     options.ClientSecret = configuration["Google:ClientSecret"];
                 }
             );
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
     }
 }

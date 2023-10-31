@@ -6,12 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GistBlog.BLL.Services.Implementation.social;
 
-public class ExternalAuthService : IExternalAuthService
+public class GoogleAuthService : IGoogleAuthService
 {
     private readonly ITokenService _tokenService;
     private readonly UserManager<AppUser> _userManager;
 
-    public ExternalAuthService(ITokenService tokenService, UserManager<AppUser> userManager)
+    public GoogleAuthService(ITokenService tokenService, UserManager<AppUser> userManager)
     {
         _tokenService = tokenService;
         _userManager = userManager;
@@ -66,8 +66,6 @@ public class ExternalAuthService : IExternalAuthService
         }
         catch (Exception ex)
         {
-            // Log the exception details for troubleshooting
-            // Return an appropriate error response
             return new StatusCodeResult(500);
         }
     }

@@ -3,13 +3,13 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using GistBlog.DAL.Entities.Models.UserEntities;
 
-namespace GistBlog.BLL.Services.Infrastructures;
+namespace GistBlog.DAL.Infrastructures;
 
 public static class MimeExtensions
 {
     public static string GetContentType(string extension)
     {
-        switch(extension)
+        switch (extension)
         {
             case StringConstants.Jpeg:
             case StringConstants.Jpg:

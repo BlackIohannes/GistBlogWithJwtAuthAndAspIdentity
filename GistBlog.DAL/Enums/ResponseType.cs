@@ -2,5 +2,12 @@
 
 public enum ResponseType
 {
-    
+    NoData,
+    Success,
+    Failed,
+    Unauthorized,
+    Created,
+    ServiceError,
+    Conflict,
+    Forbidden
 }

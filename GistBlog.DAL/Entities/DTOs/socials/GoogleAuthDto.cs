@@ -1,7 +1,7 @@
 ﻿namespace GistBlog.DAL.Entities.DTOs.socials;
 
-public class ExternalAuthDto
+public class GoogleAuthDto
 {
     public string? Provider { get; set; }
-    public string? TokenId { get; set; }
+    public string? AccessToken { get; set; }
 }

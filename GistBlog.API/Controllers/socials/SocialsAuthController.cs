@@ -6,17 +6,17 @@ namespace GistBlog.API.Controllers.socials;
 
 [ApiController]
 [Route("api/vi/")]
-public class GoogleAuthController : ControllerBase
+public class SocialsAuthController : ControllerBase
 {
     private readonly IGoogleAuthService _googleAuthService;
 
-    public GoogleAuthController(IGoogleAuthService googleAuthService)
+    public SocialsAuthController(IGoogleAuthService googleAuthService)
     {
         _googleAuthService = googleAuthService;
     }
 
-    [HttpPost("external-login")]
-    public async Task<IActionResult> ExternalLogin([FromBody] GoogleAuthDto googleAuth)
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthDto googleAuth)
     {
         return await _googleAuthService.ExternalLogin(googleAuth);
     }

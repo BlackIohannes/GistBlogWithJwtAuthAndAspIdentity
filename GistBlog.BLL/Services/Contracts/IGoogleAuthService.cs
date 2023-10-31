@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GistBlog.BLL.Services.Contracts;
 
-public interface IExternalAuthService
+public interface IGoogleAuthService
 {
     Task<IActionResult> ExternalLogin(GoogleAuthDto googleAuth);
 }

@@ -1,6 +1,6 @@
 ﻿namespace GistBlog.DAL.Entities.Resources;
 
-public class ObjectResource
+public class ObjectResource<T> : StatusResource
 {
-    
+    public T? Data { get; set; }
 }

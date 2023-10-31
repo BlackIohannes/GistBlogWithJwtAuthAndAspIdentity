@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GistBlog.API.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/")]
 public class TokenController : ControllerBase
 {
     private readonly DataContext _context;
@@ -19,7 +19,7 @@ public class TokenController : ControllerBase
         _tokenService = tokenService;
     }
 
-    [HttpPost("RefreshToken")]
+    [HttpPost("refresh-token")]
     public async Task<ActionResult> Refresh(RefreshTokenRequestDto tokenRequestDto)
     {
         if (tokenRequestDto is null)
@@ -47,7 +47,7 @@ public class TokenController : ControllerBase
     }
 
     // Revoke is used for revoking token entry from the db
-    [HttpPost("RevokeToken")]
+    [HttpPost("revoke-token")]
     public async Task<ActionResult> Revoke()
     {
         // Check if the "Authorization" header is present and not empty

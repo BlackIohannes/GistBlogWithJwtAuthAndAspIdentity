@@ -6,7 +6,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace GistBlog.API.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v1/")]
 public class BlogController : ControllerBase
 {
     private readonly IBlogService _blogService;
@@ -17,7 +17,7 @@ public class BlogController : ControllerBase
     }
 
     [SwaggerOperation(Summary = "AddBlog")]
-    [HttpPost("CreateNewBlogPost")]
+    [HttpPost("create-new-blog-post")]
     public async Task<IActionResult> AddBlog([FromForm] BlogDto blogDto)
     {
         var result = await _blogService.AddBlogAsync(blogDto);
@@ -29,7 +29,7 @@ public class BlogController : ControllerBase
     }
 
     [SwaggerOperation(Summary = "GetAllBlogsAsync")]
-    [HttpGet("GetAllBlogsAsync")]
+    [HttpGet("get-all-blogs")]
     public async Task<IActionResult> GetAllBlogsAsync(int pageIndex, int pageSize, string sortOrder,
         string searchCategory)
     {
@@ -42,7 +42,7 @@ public class BlogController : ControllerBase
     }
 
     [SwaggerOperation(Summary = "GetBlogs")]
-    [HttpGet("GetAllUserBlogs")]
+    [HttpGet("get-all-user-blogs")]
     public async Task<IActionResult> GetAllUserBlogsAsync(string id, int pageIndex, int pageSize)
     {
         var blogs = await _blogService.GetAllUserBlogsAsync(id, pageIndex, pageSize);
@@ -54,7 +54,7 @@ public class BlogController : ControllerBase
     }
 
     [SwaggerOperation(Summary = "GetBlogById")]
-    [HttpGet("GetSingleBlogById")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetBlogById(Guid id)
     {
         var blog = await _blogService.GetBlogByIdAsync(id);
@@ -66,7 +66,7 @@ public class BlogController : ControllerBase
     }
 
     [SwaggerOperation(Summary = "UpdateBlog")]
-    [HttpPost("UpdateUserBlog")]
+    [HttpPost("update-user-blog")]
     public async Task<IActionResult> UpdateBlog([FromForm] UpdateBlogDto blogDto)
     {
         var blog = await _blogService.UpdateBlogAsync(blogDto);
@@ -75,7 +75,7 @@ public class BlogController : ControllerBase
 
     [SwaggerOperation(Summary = "DeleteBlog")]
     // [Authorize(Roles = "Admin")]
-    [HttpDelete("DeleteBlogById")]
+    [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteBlog(Guid id)
     {
         var blog = await _blogService.DeleteBlogAsync(id);
@@ -87,7 +87,7 @@ public class BlogController : ControllerBase
     }
 
     [SwaggerOperation(Summary = "UploadBlogImages")]
-    [HttpPost("UploadBlogImages")]
+    [HttpPost("upload-blog-images")]
     public async Task<IActionResult> UploadBlogImages(string id, IFormFile file)
     {
         var blog = await _blogService.UploadBlogImagesAsync(id, file);
@@ -98,7 +98,7 @@ public class BlogController : ControllerBase
         return Ok(blog);
     }
 
-    [HttpGet("GetAllBlogsIncludingDeletedBlogs")]
+    [HttpGet("get-all-blogs-including-deleted-blogs")]
     public async Task<IActionResult> GetAllBlogsIncludingDeletedBlogs()
     {
         var blogs = await _blogService.GetAllBlogsIncludingDeletedBlogs();

@@ -38,5 +38,9 @@
         <PackageReference Include="WatchDog.NET" Version="1.4.7"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Folder Include="EmailServiceConfigurations\"/>
+    </ItemGroup>
+
 
 </Project>

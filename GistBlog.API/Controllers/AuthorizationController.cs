@@ -11,17 +11,12 @@ public class AuthorizationController : BaseController
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly ILogger<AuthorizationController> _logger;
-    private readonly IPasswordResetService _passwordResetService;
-    private readonly IResetPasswordService _resetPasswordService;
 
     public AuthorizationController(IAuthenticationService authenticationService,
-        ILogger<AuthorizationController> logger, IPasswordResetService passwordResetService,
-        IResetPasswordService resetPasswordService) : base(logger)
+        ILogger<AuthorizationController> logger) : base(logger)
     {
         _authenticationService = authenticationService;
         _logger = logger;
-        _passwordResetService = passwordResetService;
-        _resetPasswordService = resetPasswordService;
     }
 
     [SwaggerOperation(Summary = "Register")]
@@ -68,17 +63,6 @@ public class AuthorizationController : BaseController
             return StatusCode(StatusCodes.Status400BadRequest);
 
         return Ok(loginStatus);
-    }
-
-    [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordDto model)
-    {
-        var forgotPassword = await _authenticationService.ForgotPasswordAsync(model);
-
-        if (forgotPassword == null)
-            return StatusCode(StatusCodes.Status400BadRequest);
-
-        return Ok(forgotPassword);
     }
 
     [SwaggerOperation(Summary = "ChangePassword")]
@@ -232,7 +216,7 @@ public class AuthorizationController : BaseController
         if (!ModelState.IsValid)
             return BadRequest();
 
-        var token = await _passwordResetService.GeneratePasswordResetTokenAsync(forgotPasswordDto.Email);
+        var token = await _authenticationService.GeneratePasswordResetTokenAsync(forgotPasswordDto.Email!);
         if (token == null)
             return BadRequest("Invalid Request");
 
@@ -240,7 +224,7 @@ public class AuthorizationController : BaseController
             new { token, email = forgotPasswordDto.Email });
 
         var isEmailSent =
-            await _passwordResetService.SendPasswordResetEmailAsync(forgotPasswordDto.Email, callbackUrl!);
+            await _authenticationService.SendPasswordResetEmailAsync(forgotPasswordDto.Email!, callbackUrl!);
         if (!isEmailSent)
             return BadRequest("Failed to send email");
 
@@ -253,7 +237,7 @@ public class AuthorizationController : BaseController
         if (!ModelState.IsValid)
             return BadRequest();
 
-        var isSuccess = await _resetPasswordService.ResetPasswordAsync(resetPasswordDto.Email, resetPasswordDto.Token,
+        var isSuccess = await _authenticationService.ResetPasswordAsync(resetPasswordDto.Email, resetPasswordDto.Token,
             resetPasswordDto.Password);
         if (!isSuccess)
             return BadRequest("Invalid Request or Failed to Reset Password");

@@ -10,7 +10,6 @@ public interface IAuthenticationService
     Task<LoginResponse> LoginAsync(LoginDto model);
     Task<Status> LogoutAsync(string username);
     Task<Status> LoginStatusAsync(string username);
-    Task<Status> ForgotPasswordAsync([FromBody] ForgotPasswordDto model);
     Task<Status> ChangePasswordAsync(ChangePasswordDto model);
     Task<Status> AdminRegistrationAsync(RegistrationDto model);
     Task<Status> CreateRolesAsync([FromBody] List<string> roles);
@@ -24,4 +23,12 @@ public interface IAuthenticationService
     Task<List<string>?> GetAllUsersAndRolesAsync();
     Task<Status> DeleteUserAsync(string username);
     Task<List<string>?> GetAllUsersAsync();
+
+    #region forget password and reset password service implementation
+
+    Task<string?> GeneratePasswordResetTokenAsync(string email);
+    Task<bool> SendPasswordResetEmailAsync(string email, string callbackUrl);
+    Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+
+    #endregion
 }

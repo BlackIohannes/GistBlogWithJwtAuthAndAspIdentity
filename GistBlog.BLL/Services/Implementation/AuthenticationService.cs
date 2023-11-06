@@ -2,6 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Configurations;
+using GistBlog.DAL.Configurations.EmailConfig.messages;
+using GistBlog.DAL.Configurations.EmailConfig.services;
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Entities.Responses;
@@ -17,6 +19,7 @@ public class AuthenticationService : IAuthenticationService
 {
     private readonly IConfiguration _configuration;
     private readonly DataContext _context;
+    private readonly IEmailSender _emailSender;
     private readonly IMailjetService _mailjetService;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly SignInManager<AppUser> _signInManager;
@@ -30,7 +33,8 @@ public class AuthenticationService : IAuthenticationService
         ITokenService tokenService,
         IMailjetService mailjetService,
         IConfiguration configuration,
-        SignInManager<AppUser> signInManager
+        SignInManager<AppUser> signInManager,
+        IEmailSender emailSender
     )
     {
         _context = context;
@@ -40,6 +44,7 @@ public class AuthenticationService : IAuthenticationService
         _mailjetService = mailjetService;
         _configuration = configuration;
         _signInManager = signInManager;
+        _emailSender = emailSender;
     }
 
     public async Task<Status> SignupAsync(RegistrationDto model)
@@ -205,52 +210,6 @@ public class AuthenticationService : IAuthenticationService
             status.StatusCode = 0;
             status.Message = "Not logged in";
         }
-
-        return status;
-    }
-
-    // forgot password
-    public async Task<Status> ForgotPasswordAsync([FromBody] ForgotPasswordDto model)
-    {
-        var status = new Status();
-
-        // Check validations
-        if (string.IsNullOrEmpty(model.Email))
-        {
-            status.StatusCode = 0;
-            status.Message = "Please provide a valid email";
-            return status;
-        }
-
-        // Find the user by email
-        var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user == null)
-        {
-            status.StatusCode = 0;
-            status.Message = "Invalid email";
-            return status;
-        }
-
-        // Ensure there is only one user found with the email
-        var usersCount = await _userManager.Users.CountAsync(u => u.Email == model.Email);
-        if (usersCount > 1) throw new InvalidOperationException("Sequence contains more than one element");
-
-        // Generate password reset token
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        var link = $"{_configuration["AppSettings:BaseUrl"]}/reset-password?token={token}&email={model.Email}";
-
-        // Send email
-        var headers = new Dictionary<string, string>
-        {
-            { "Reply-To", "noreply@example.com" }
-        };
-        var headersString = string.Join("; ", headers.Select(kv => $"{kv.Key}={kv.Value}"));
-
-        await _mailjetService.SendEmailAsync(user.Email, "Reset Password",
-            $"Please click on the link below to reset your password: {link}", headersString);
-
-        status.StatusCode = 1;
-        status.Message = "Password reset link has been sent to your email";
 
         return status;
     }
@@ -630,4 +589,43 @@ public class AuthenticationService : IAuthenticationService
 
         return users.Select(x => x.UserName).ToList();
     }
+
+    #region forget password and reset password service implementation
+
+    // Forgot password
+    public async Task<string?> GeneratePasswordResetTokenAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        return user != null ? await _userManager.GeneratePasswordResetTokenAsync(user) : null;
+    }
+
+    public async Task<bool> SendPasswordResetEmailAsync(string email, string callbackUrl)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+            return false;
+
+        var message = new Message(new[] { email }, "Reset password token", callbackUrl, null);
+        await _emailSender.SendEmailAsync(message);
+
+        return true;
+    }
+
+    // reset password
+    public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+            return false;
+
+        var resetPassResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (!resetPassResult.Succeeded)
+            return false;
+
+        await _userManager.SetLockoutEndDateAsync(user, new DateTime(2000, 1, 1));
+
+        return true;
+    }
+
+    #endregion
 }

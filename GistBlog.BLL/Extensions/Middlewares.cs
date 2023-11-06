@@ -2,6 +2,7 @@ using GistBlog.BLL.Services.Contracts;
 using GistBlog.BLL.Services.Implementation;
 using GistBlog.BLL.Services.Implementation.social;
 using GistBlog.DAL.Configurations;
+using GistBlog.DAL.Configurations.EmailConfig.services;
 using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Repository.Contracts;
 using GistBlog.DAL.Repository.Implementations;
@@ -35,5 +36,6 @@ public static class Middlewares
                 }
             );
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IEmailSender, EmailSender>();
     }
 }

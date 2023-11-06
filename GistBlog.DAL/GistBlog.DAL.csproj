@@ -39,7 +39,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="EmailServiceConfigurations\"/>
+      <Folder Include="Configurations\EmailConfig\" />
     </ItemGroup>
 
 

@@ -1,4 +1,5 @@
 ﻿using GistBlog.DAL.Configurations.EmailConfig.services;
+using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Models.UserEntities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

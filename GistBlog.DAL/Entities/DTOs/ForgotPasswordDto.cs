@@ -1,6 +1,6 @@
-namespace GistBlog.DAL.Entities.DTOs;
+﻿namespace GistBlog.DAL.Entities.DTOs;
 
 public class ForgotPasswordDto
 {
-    public string Email { get; set; }
+    public string? Email { get; set; }
 }

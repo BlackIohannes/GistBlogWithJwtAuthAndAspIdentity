@@ -1,8 +1,10 @@
 using System.Text;
 using GistBlog.BLL.Extensions;
 using GistBlog.DAL.Configurations;
+using GistBlog.DAL.Configurations.EmailConfig.configurations;
 using GistBlog.DAL.Entities.Models.UserEntities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -87,6 +89,23 @@ builder.Services.AddAuthentication(options =>
 #region Register token service
 
 builder.Services.UserRegistrationServices(builder.Configuration);
+
+#endregion
+
+#region email service
+
+var emailConfig = builder.Configuration
+    .GetSection("EmailConfiguration")
+    .Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig ?? new EmailConfiguration());
+
+// file upload config
+builder.Services.Configure<FormOptions>(option =>
+{
+    option.ValueLengthLimit = int.MaxValue;
+    option.MultipartBodyLengthLimit = int.MaxValue;
+    option.MemoryBufferThreshold = int.MaxValue;
+});
 
 #endregion
 

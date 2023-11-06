@@ -1,8 +1,5 @@
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Entities.DTOs;
-using GistBlog.DAL.Entities.Models.UserEntities;
-using GistBlog.DAL.Entities.Resources;
-using GistBlog.DAL.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -14,11 +11,17 @@ public class AuthorizationController : BaseController
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly ILogger<AuthorizationController> _logger;
+    private readonly IPasswordResetService _passwordResetService;
+    private readonly IResetPasswordService _resetPasswordService;
 
-    public AuthorizationController(IAuthenticationService authenticationService, ILogger<AuthorizationController> logger) : base(logger)
+    public AuthorizationController(IAuthenticationService authenticationService,
+        ILogger<AuthorizationController> logger, IPasswordResetService passwordResetService,
+        IResetPasswordService resetPasswordService) : base(logger)
     {
         _authenticationService = authenticationService;
         _logger = logger;
+        _passwordResetService = passwordResetService;
+        _resetPasswordService = resetPasswordService;
     }
 
     [SwaggerOperation(Summary = "Register")]
@@ -221,5 +224,40 @@ public class AuthorizationController : BaseController
             return StatusCode(StatusCodes.Status404NotFound);
 
         return Ok(getAllUsersAsync);
+    }
+
+    [HttpPost("forgotPassword")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
+        var token = await _passwordResetService.GeneratePasswordResetTokenAsync(forgotPasswordDto.Email);
+        if (token == null)
+            return BadRequest("Invalid Request");
+
+        var callbackUrl = Url.Action(nameof(ForgotPassword), "ForgotPassword",
+            new { token, email = forgotPasswordDto.Email });
+
+        var isEmailSent =
+            await _passwordResetService.SendPasswordResetEmailAsync(forgotPasswordDto.Email, callbackUrl!);
+        if (!isEmailSent)
+            return BadRequest("Failed to send email");
+
+        return Ok($"Use The Generated Token Below To Reset Password:\n\n {token}");
+    }
+
+    [HttpPost("resetPassword")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModelDto resetPasswordDto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest();
+
+        var isSuccess = await _resetPasswordService.ResetPasswordAsync(resetPasswordDto.Email, resetPasswordDto.Token,
+            resetPasswordDto.Password);
+        if (!isSuccess)
+            return BadRequest("Invalid Request or Failed to Reset Password");
+
+        return Ok("Password Reset Was Successful!");
     }
 }

@@ -37,5 +37,7 @@ public static class Middlewares
             );
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
         services.AddScoped<IEmailSender, EmailSender>();
+        services.AddScoped<IPasswordResetService, PasswordResetService>();
+        services.AddScoped<IResetPasswordService, ResetPasswordService>();
     }
 }

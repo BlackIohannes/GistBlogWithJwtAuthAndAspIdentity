@@ -593,32 +593,32 @@ public class AuthenticationService : IAuthenticationService
     #region forget password and reset password service implementation
 
     // Forgot password
-    public async Task<string?> GeneratePasswordResetTokenAsync(string email)
+    public async Task<string?> GeneratePasswordResetTokenAsync(ForgotPasswordResetDto resetDto)
     {
-        var user = await _userManager.FindByEmailAsync(email);
+        var user = await _userManager.FindByEmailAsync(resetDto.Email);
         return user != null ? await _userManager.GeneratePasswordResetTokenAsync(user) : null;
     }
 
-    public async Task<bool> SendPasswordResetEmailAsync(string email, string callbackUrl)
+    public async Task<bool> SendForgotPasswordEmailAsync(ForgotPasswordResetDto resetDto)
     {
-        var user = await _userManager.FindByEmailAsync(email);
+        var user = await _userManager.FindByEmailAsync(resetDto.Email);
         if (user == null)
             return false;
 
-        var message = new Message(new[] { email }, "Reset password token", callbackUrl, null);
+        var message = new Message(new[] { resetDto.Email }, "Reset password token", resetDto.CallbackUrl, null);
         await _emailSender.SendEmailAsync(message);
 
         return true;
     }
 
     // reset password
-    public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
+    public async Task<bool> ResetPasswordAsync(PasswordResetInfoDto resetInfoDto)
     {
-        var user = await _userManager.FindByEmailAsync(email);
+        var user = await _userManager.FindByEmailAsync(resetInfoDto.Email);
         if (user == null)
             return false;
 
-        var resetPassResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        var resetPassResult = await _userManager.ResetPasswordAsync(user, resetInfoDto.Token, resetInfoDto.NewPassword);
         if (!resetPassResult.Succeeded)
             return false;
 

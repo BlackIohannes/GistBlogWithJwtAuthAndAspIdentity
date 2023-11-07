@@ -26,9 +26,13 @@ public interface IAuthenticationService
 
     #region forget password and reset password service implementation
 
-    Task<string?> GeneratePasswordResetTokenAsync(string email);
-    Task<bool> SendPasswordResetEmailAsync(string email, string callbackUrl);
-    Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+    Task<string?> GeneratePasswordResetTokenAsync(ForgotPasswordResetDto resetDto);
+    Task<bool> SendForgotPasswordEmailAsync(ForgotPasswordResetDto resetDto);
+
+    Task<bool> ResetPasswordAsync(PasswordResetInfoDto resetInfoDto);
+    // Task<string?> GeneratePasswordResetTokenAsync(string email);
+    // Task<bool> SendPasswordResetEmailAsync(string email, string callbackUrl);
+    // Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
 
     #endregion
 }

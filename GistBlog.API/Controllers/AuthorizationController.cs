@@ -211,20 +211,27 @@ public class AuthorizationController : BaseController
     }
 
     [HttpPost("forgotPassword")]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
     {
         if (!ModelState.IsValid)
             return BadRequest();
 
-        var token = await _authenticationService.GeneratePasswordResetTokenAsync(forgotPasswordDto.Email!);
+        var token = await _authenticationService.GeneratePasswordResetTokenAsync(new ForgotPasswordResetDto
+        {
+            Email = forgotPasswordDto.Email!
+        });
+
         if (token == null)
             return BadRequest("Invalid Request");
 
-        var callbackUrl = Url.Action(nameof(ForgotPassword), "ForgotPassword",
-            new { token, email = forgotPasswordDto.Email });
+        var resetDto = new ForgotPasswordResetDto
+        {
+            Email = forgotPasswordDto.Email!,
+            CallbackUrl = Url.Action(nameof(ForgotPassword), "ForgotPassword",
+                new { token, email = forgotPasswordDto.Email })!
+        };
 
-        var isEmailSent =
-            await _authenticationService.SendPasswordResetEmailAsync(forgotPasswordDto.Email!, callbackUrl!);
+        var isEmailSent = await _authenticationService.SendForgotPasswordEmailAsync(resetDto);
         if (!isEmailSent)
             return BadRequest("Failed to send email");
 
@@ -232,13 +239,20 @@ public class AuthorizationController : BaseController
     }
 
     [HttpPost("resetPassword")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModelDto resetPasswordDto)
+    public async Task<IActionResult> ResetPassword(ResetPasswordModelDto resetPasswordModelDto)
     {
         if (!ModelState.IsValid)
             return BadRequest();
 
-        var isSuccess = await _authenticationService.ResetPasswordAsync(resetPasswordDto.Email, resetPasswordDto.Token,
-            resetPasswordDto.Password);
+        var resetInfoDto = new PasswordResetInfoDto
+        {
+            Email = resetPasswordModelDto.Email,
+            Token = resetPasswordModelDto.Token,
+            NewPassword = resetPasswordModelDto.Password
+        };
+
+        var isSuccess = await _authenticationService.ResetPasswordAsync(resetInfoDto);
+
         if (!isSuccess)
             return BadRequest("Invalid Request or Failed to Reset Password");
 

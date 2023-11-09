@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using GistBlog.BLL.Services.Contracts;
 using GistBlog.DAL.Entities.DTOs.socials;
+using GistBlog.DAL.Entities.Models.UserEntities;
 using GistBlog.DAL.Entities.Responses;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Http;
@@ -25,7 +26,7 @@ public class TokenService : ITokenService
         _googleSettings = _configuration.GetSection("Google");
     }
 
-    public TokenResponse GetToken(IEnumerable<Claim> claims)
+    public TokenResponse GenerateToken(IEnumerable<Claim> claims)
     {
         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
@@ -91,7 +92,19 @@ public class TokenService : ITokenService
             return null;
         }
     }
-    
+
+    public static IEnumerable<Claim> GetClaims(AppUser user)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName),
+            new(ClaimTypes.Email, user.Email)
+        };
+
+        return claims;
+    }
+
     // verify facebook token
     // verify instagram token
 }

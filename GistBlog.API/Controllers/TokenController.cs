@@ -33,7 +33,7 @@ public class TokenController : ControllerBase
         if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryDate <= DateTime.Now)
             return BadRequest("Invalid client request");
 
-        var newAccessToken = _tokenService.GetToken(principal.Claims);
+        var newAccessToken = _tokenService.GenerateToken(principal.Claims);
         var newRefreshToken = _tokenService.GetRefreshToken();
         user.RefreshToken = newRefreshToken;
 

@@ -7,7 +7,7 @@ namespace GistBlog.BLL.Services.Contracts;
 
 public interface ITokenService
 {
-    TokenResponse GetToken(IEnumerable<Claim> claims);
+    TokenResponse GenerateToken(IEnumerable<Claim> claims);
     string GetRefreshToken();
     ClaimsPrincipal GetPrincipalFromExpiredToken(string? token);
     Task<GoogleJsonWebSignature.Payload?> VerifyGoogleToken(GoogleAuthDto googleAuth);

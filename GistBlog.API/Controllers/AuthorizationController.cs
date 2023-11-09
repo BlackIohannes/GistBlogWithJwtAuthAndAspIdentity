@@ -1,6 +1,11 @@
 using GistBlog.BLL.Services.Contracts;
+using GistBlog.DAL.Configurations.EmailConfig.messages;
+using GistBlog.DAL.Configurations.EmailConfig.services;
 using GistBlog.DAL.Entities.DTOs;
+using GistBlog.DAL.Entities.Models.UserEntities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace GistBlog.API.Controllers;
@@ -10,20 +15,28 @@ namespace GistBlog.API.Controllers;
 public class AuthorizationController : BaseController
 {
     private readonly IAuthenticationService _authenticationService;
+    private readonly IEmailSender _emailSender;
+    private readonly ITokenService _jwtHandler;
     private readonly ILogger<AuthorizationController> _logger;
+    private readonly UserManager<AppUser> _userManager;
 
     public AuthorizationController(IAuthenticationService authenticationService,
-        ILogger<AuthorizationController> logger) : base(logger)
+        ILogger<AuthorizationController> logger, UserManager<AppUser> userManager, IEmailSender emailSender,
+        ITokenService jwtHandler) : base(logger)
     {
         _authenticationService = authenticationService;
         _logger = logger;
+        _userManager = userManager;
+        _emailSender = emailSender;
+        _jwtHandler = jwtHandler;
     }
 
     [SwaggerOperation(Summary = "Register")]
     [HttpPost("user-registration")]
     public async Task<IActionResult> Register([FromBody] RegistrationDto model)
     {
-        var status = await _authenticationService.SignupAsync(model);
+        var scheme = Request.Scheme;
+        var status = await _authenticationService.SignupAsync(model, scheme);
 
         if (status == null)
             return StatusCode(StatusCodes.Status400BadRequest);
@@ -43,6 +56,18 @@ public class AuthorizationController : BaseController
         return Ok(userLogin);
     }
 
+    [SwaggerOperation(Summary = "ConfirmEmail")]
+    [HttpPost("confirm-email")]
+    public async Task<ActionResult> ConfirmEmail([FromBody] string token, string email)
+    {
+        var response = await _authenticationService.ConfirmEmail(token, email);
+
+        if (response == null)
+            return StatusCode(StatusCodes.Status400BadRequest);
+
+        return Ok(response);
+    }
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(string username)
     {
@@ -53,6 +78,8 @@ public class AuthorizationController : BaseController
 
         return Ok(loggedOutUser);
     }
+
+    #region other auths
 
     [HttpPost("login-status")]
     public async Task<IActionResult> LoginStatusAsync(string username)
@@ -227,7 +254,7 @@ public class AuthorizationController : BaseController
         var resetDto = new ForgotPasswordResetDto
         {
             Email = forgotPasswordDto.Email!,
-            CallbackUrl = Url.Action(nameof(ForgotPassword), "ForgotPassword",
+            CallbackUrl = Url.Action(nameof(ForgotPassword), "Authorization",
                 new { token, email = forgotPasswordDto.Email })!
         };
 
@@ -258,4 +285,6 @@ public class AuthorizationController : BaseController
 
         return Ok("Password Reset Was Successful!");
     }
+
+    #endregion
 }

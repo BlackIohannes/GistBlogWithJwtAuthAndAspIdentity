@@ -56,7 +56,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 #region Identity Configuration
 
-builder.Services.AddIdentity<AppUser, IdentityRole>()
+builder.Services.AddIdentity<AppUser, IdentityRole>(option => { option.SignIn.RequireConfirmedEmail = true; })
     .AddEntityFrameworkStores<DataContext>()
     .AddDefaultTokenProviders();
 

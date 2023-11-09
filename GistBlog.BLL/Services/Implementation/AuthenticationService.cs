@@ -11,18 +11,14 @@ using GistBlog.DAL.Entities.Tokens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace GistBlog.BLL.Services.Implementation;
 
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly IConfiguration _configuration;
     private readonly DataContext _context;
     private readonly IEmailSender _emailSender;
-    private readonly IMailjetService _mailjetService;
     private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly SignInManager<AppUser> _signInManager;
     private readonly ITokenService _tokenService;
     private readonly UserManager<AppUser> _userManager;
 
@@ -31,9 +27,6 @@ public class AuthenticationService : IAuthenticationService
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager,
         ITokenService tokenService,
-        IMailjetService mailjetService,
-        IConfiguration configuration,
-        SignInManager<AppUser> signInManager,
         IEmailSender emailSender
     )
     {
@@ -41,13 +34,10 @@ public class AuthenticationService : IAuthenticationService
         _userManager = userManager;
         _roleManager = roleManager;
         _tokenService = tokenService;
-        _mailjetService = mailjetService;
-        _configuration = configuration;
-        _signInManager = signInManager;
         _emailSender = emailSender;
     }
 
-    public async Task<Status> SignupAsync(RegistrationDto model)
+    public async Task<Status> SignupAsync(RegistrationDto model, string scheme)
     {
         var status = new Status();
         if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||
@@ -94,9 +84,22 @@ public class AuthenticationService : IAuthenticationService
             status.Message = "User creation failed.";
             return status;
         }
+        
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        
+        var param = new Dictionary<string, string?>
+        {
+            { "token", token },
+            { "email", user.Email }
+        };
+        
+        var callback =
+            $"{scheme}://https://localhost:7154/Account/ConfirmEmail?token={token}";
+
+        var message = new Message(new[] { user.Email }, "Confirmation email link", callback, null);
+        await _emailSender.SendEmailAsync(message);
 
         // Add roles
-        // For admin registration, use UserRole.Admin instead of UserRole.User
         if (!await _roleManager.RoleExistsAsync(UserRole.User))
             await _roleManager.CreateAsync(new IdentityRole(UserRole.User));
 
@@ -111,7 +114,14 @@ public class AuthenticationService : IAuthenticationService
     public async Task<LoginResponse> LoginAsync(LoginDto model)
     {
         var user = await _userManager.FindByNameAsync(model.Username);
-        if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
+
+        // if (!await _userManager.IsEmailConfirmedAsync(user))
+        //     throw new Exception("Unauthorized! Email is not confirmed.");
+        //
+        // if (!await _userManager.CheckPasswordAsync(user, model.Password))
+        //     throw new Exception("Password is not valid.");
+        
+        if (user != null)
         {
             var userRoles = await _userManager.GetRolesAsync(user);
             var authClaims = new List<Claim>
@@ -123,7 +133,7 @@ public class AuthenticationService : IAuthenticationService
             };
             foreach (var userRole in userRoles) authClaims.Add(new Claim(ClaimTypes.Role, userRole));
 
-            var token = _tokenService.GetToken(authClaims);
+            var token = _tokenService.GenerateToken(authClaims);
             var refreshToken = _tokenService.GetRefreshToken();
             var tokenInfo = await _context.TokenInfos!.FirstOrDefaultAsync(x => x.Username == user.UserName);
             if (tokenInfo == null)
@@ -173,6 +183,80 @@ public class AuthenticationService : IAuthenticationService
             Expiration = null
         };
     }
+
+    public async Task<Status> AdminRegistrationAsync([FromBody] RegistrationDto model)
+    {
+        var status = new Status();
+        if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||
+            string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.PhoneNumber) ||
+            string.IsNullOrEmpty(model.Password))
+        {
+            status.StatusCode = 0;
+            status.Message = "Please pass all the required fields";
+            return status;
+        }
+
+        // check if user exists
+        var userExists = await _userManager.FindByNameAsync(model.Username);
+        if (userExists != null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Username already exists.";
+            return status;
+        }
+
+        var emailExist = await _userManager.FindByEmailAsync(model.Email);
+
+        if (emailExist != null)
+        {
+            status.StatusCode = 0;
+            status.Message = "Email already exists.";
+            return status;
+        }
+
+        var user = new AppUser
+        {
+            UserName = model.Username,
+            SecurityStamp = Guid.NewGuid().ToString(),
+            Email = model.Email,
+            Fullname = model.Fullname,
+            PhoneNumber = model.PhoneNumber
+        };
+        // create a user here
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+        {
+            status.StatusCode = 0;
+            status.Message = "User creation failed";
+            return status;
+        }
+
+        // add roles here
+        // for admin registration UserRoles.Admin instead of UserRoles.Roles
+        if (!await _roleManager.RoleExistsAsync(UserRole.Admin))
+            await _roleManager.CreateAsync(new IdentityRole(UserRole.Admin));
+
+        if (await _roleManager.RoleExistsAsync(UserRole.Admin))
+            await _userManager.AddToRoleAsync(user, UserRole.Admin);
+
+        status.StatusCode = 1;
+        status.Message = "Successfully registered";
+        return status;
+    }
+
+    public async Task<IdentityResult> ConfirmEmail(string token, string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+            throw new Exception("Email not found!");
+
+        var result = await _userManager.ConfirmEmailAsync(user, token);
+        if (result is null) throw new Exception("Email confirmation failed!");
+
+        return result;
+    }
+
+    #region other auths
 
     // logout
     public async Task<Status> LogoutAsync(string username)
@@ -254,66 +338,6 @@ public class AuthenticationService : IAuthenticationService
         status.StatusCode = 1;
         status.Message = "Password change was successful";
 
-        return status;
-    }
-
-    public async Task<Status> AdminRegistrationAsync([FromBody] RegistrationDto model)
-    {
-        var status = new Status();
-        if (string.IsNullOrEmpty(model.Fullname) || string.IsNullOrEmpty(model.Username) ||
-            string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.PhoneNumber) ||
-            string.IsNullOrEmpty(model.Password))
-        {
-            status.StatusCode = 0;
-            status.Message = "Please pass all the required fields";
-            return status;
-        }
-
-        // check if user exists
-        var userExists = await _userManager.FindByNameAsync(model.Username);
-        if (userExists != null)
-        {
-            status.StatusCode = 0;
-            status.Message = "Username already exists.";
-            return status;
-        }
-
-        var emailExist = await _userManager.FindByEmailAsync(model.Email);
-
-        if (emailExist != null)
-        {
-            status.StatusCode = 0;
-            status.Message = "Email already exists.";
-            return status;
-        }
-
-        var user = new AppUser
-        {
-            UserName = model.Username,
-            SecurityStamp = Guid.NewGuid().ToString(),
-            Email = model.Email,
-            Fullname = model.Fullname,
-            PhoneNumber = model.PhoneNumber
-        };
-        // create a user here
-        var result = await _userManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded)
-        {
-            status.StatusCode = 0;
-            status.Message = "User creation failed";
-            return status;
-        }
-
-        // add roles here
-        // for admin registration UserRoles.Admin instead of UserRoles.Roles
-        if (!await _roleManager.RoleExistsAsync(UserRole.Admin))
-            await _roleManager.CreateAsync(new IdentityRole(UserRole.Admin));
-
-        if (await _roleManager.RoleExistsAsync(UserRole.Admin))
-            await _userManager.AddToRoleAsync(user, UserRole.Admin);
-
-        status.StatusCode = 1;
-        status.Message = "Successfully registered";
         return status;
     }
 
@@ -590,6 +614,8 @@ public class AuthenticationService : IAuthenticationService
         return users.Select(x => x.UserName).ToList();
     }
 
+    #endregion
+
     #region forget password and reset password service implementation
 
     // Forgot password
@@ -619,12 +645,7 @@ public class AuthenticationService : IAuthenticationService
             return false;
 
         var resetPassResult = await _userManager.ResetPasswordAsync(user, resetInfoDto.Token, resetInfoDto.NewPassword);
-        if (!resetPassResult.Succeeded)
-            return false;
-
-        await _userManager.SetLockoutEndDateAsync(user, new DateTime(2000, 1, 1));
-
-        return true;
+        return resetPassResult.Succeeded;
     }
 
     #endregion

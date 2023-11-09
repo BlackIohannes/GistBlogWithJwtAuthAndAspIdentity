@@ -1,13 +1,15 @@
 using GistBlog.DAL.Entities.DTOs;
 using GistBlog.DAL.Entities.Responses;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GistBlog.BLL.Services.Contracts;
 
 public interface IAuthenticationService
 {
-    Task<Status> SignupAsync(RegistrationDto model);
+    Task<Status> SignupAsync(RegistrationDto model, string scheme);
     Task<LoginResponse> LoginAsync(LoginDto model);
+    Task<IdentityResult> ConfirmEmail(string token, string email);
     Task<Status> LogoutAsync(string username);
     Task<Status> LoginStatusAsync(string username);
     Task<Status> ChangePasswordAsync(ChangePasswordDto model);

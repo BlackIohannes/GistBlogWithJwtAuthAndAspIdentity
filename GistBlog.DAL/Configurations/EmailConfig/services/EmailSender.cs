@@ -34,8 +34,22 @@ public class EmailSender : IEmailSender
         emailMessage.From.Add(new MailboxAddress("email", _emailConfiguration.From));
         emailMessage.To.AddRange(message.To);
         emailMessage.Subject = message.Subject;
+
         var bodyBuilder = new BodyBuilder
-            { HtmlBody = $"<h2 style='color:red;'>{message.Content}</h2>" };
+        {
+            // Card Design
+            HtmlBody = $"<div style='border: 1px solid #ddd; border-radius: 5px; overflow: hidden;'>" +
+                       $"<div style='background-color: #f5f5f5; padding: 10px; text-align: center;'>" +
+                       $"<h2 style='color: #333;'>{message.Subject}</h2></div>"
+        };
+
+        // Main Content
+        bodyBuilder.HtmlBody += $"<div style='padding: 20px;'>{message.Content}</div>";
+
+        // Token as a Link on a Separate Line
+        bodyBuilder.HtmlBody += $"<div style='background-color: #4CAF50; padding: 10px; text-align: center;'>" +
+                                $"<a href='{message.Content}' style='color: white; text-decoration: none; display: block;'>" +
+                                $"Use The Generated Token Below To Reset Password</a></div>";
 
         if (message.Attachments is not null && message.Attachments.Any())
             foreach (var attachment in message.Attachments)
